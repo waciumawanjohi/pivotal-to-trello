@@ -35,6 +35,7 @@ def mock_pivotal_story(options = {})
     story_type:    'feature',
     id: 1234,
     before_id: 1235,
+    labels: [],
   }.merge(options)
 
   story = double(TrackerApi::Resources::Story)
