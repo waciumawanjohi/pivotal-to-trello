@@ -132,6 +132,7 @@ module PivotalToTrello
 
     # Copies notes from the pivotal story to the card.
     def create_comments(card, pivotal_story)
+      @logger.puts "Creating comments for card: '#{card.name}'"
       if card.respond_to?(:comments)
         existing_comments = card.comments.map { |c| c.text}
       end
@@ -145,6 +146,7 @@ module PivotalToTrello
 
     # Copies notes from the pivotal story to the card.
     def create_tasks(card, pivotal_story)
+      @logger.puts "Creating tasks for card: '#{card.name}'"
       tasks = pivotal_story.tasks
       return if tasks.empty?
 
@@ -165,6 +167,7 @@ module PivotalToTrello
     end
 
     def create_card_members(card, pivotal_story)
+      @logger.puts "Adding members to card: '#{card.name}'"
       if pivotal_story.respond_to?(:owners)
         card_members = card.members
         card_member_ids = card_members.nil? ? [] : card.members.map { |member| member.id}
@@ -177,6 +180,7 @@ module PivotalToTrello
     end
 
     def create_story_labels(card, pivotal_story)
+      @logger.puts "Creating adding labels to card: '#{card.name}'"
       if pivotal_story.labels.is_a? Array
         pivotal_story.labels.each do |label|
           add_label(card, label.name, 'pink')
@@ -185,6 +189,7 @@ module PivotalToTrello
     end
 
     def create_points_labels(card, pivotal_story)
+      @logger.puts "Adding points to card: '#{card.name}'"
       if pivotal_story.respond_to?(:estimate)
         add_label(card, pivotal_story.estimate.to_i.to_s, 'green')
       end
