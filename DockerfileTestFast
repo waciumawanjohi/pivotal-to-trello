@@ -1,0 +1,11 @@
+FROM p2t-testbase
+
+# Prepare
+COPY . /app
+
+# Install lean
+RUN cd /app && bundle install --with development
+
+# And run
+WORKDIR /app
+ENTRYPOINT ["bundle", "exec", "/app/bin/pivotal-to-trello"]
