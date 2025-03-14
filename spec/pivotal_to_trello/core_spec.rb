@@ -47,49 +47,49 @@ describe 'Core' do
 
       it 'handles accepted stories' do
         allow(story).to receive_messages(current_state: 'accepted')
-        expect(trello).to receive(:create_card).with(core.options.accepted_list_id, story).and_return(card)
+        expect(trello).to receive(:create_card).with(core.options.accepted_list_id, story, 1).and_return(card)
         core.import!
       end
 
       it 'handles rejected stories' do
         allow(story).to receive_messages(current_state: 'rejected')
-        expect(trello).to receive(:create_card).with(core.options.rejected_list_id, story).and_return(card)
+        expect(trello).to receive(:create_card).with(core.options.rejected_list_id, story, 1).and_return(card)
         core.import!
       end
 
       it 'handles finished stories' do
         allow(story).to receive_messages(current_state: 'finished')
-        expect(trello).to receive(:create_card).with(core.options.finished_list_id, story).and_return(card)
+        expect(trello).to receive(:create_card).with(core.options.finished_list_id, story, 1).and_return(card)
         core.import!
       end
 
       it 'handles delivered stories' do
         allow(story).to receive_messages(current_state: 'delivered')
-        expect(trello).to receive(:create_card).with(core.options.delivered_list_id, story).and_return(card)
+        expect(trello).to receive(:create_card).with(core.options.delivered_list_id, story, 1).and_return(card)
         core.import!
       end
 
       it 'handles unstarted features' do
         allow(story).to receive_messages(current_state: 'unstarted', story_type: 'feature')
-        expect(trello).to receive(:create_card).with(core.options.feature_list_id, story).and_return(card)
+        expect(trello).to receive(:create_card).with(core.options.feature_list_id, story, 1).and_return(card)
         core.import!
       end
 
       it 'handles unstarted chores' do
         allow(story).to receive_messages(current_state: 'unstarted', story_type: 'chore')
-        expect(trello).to receive(:create_card).with(core.options.chore_list_id, story).and_return(card)
+        expect(trello).to receive(:create_card).with(core.options.chore_list_id, story, 1).and_return(card)
         core.import!
       end
 
       it 'handles unstarted bugs' do
         allow(story).to receive_messages(current_state: 'unstarted', story_type: 'bug')
-        expect(trello).to receive(:create_card).with(core.options.bug_list_id, story).and_return(card)
+        expect(trello).to receive(:create_card).with(core.options.bug_list_id, story, 1).and_return(card)
         core.import!
       end
 
       it 'handles unstarted releases' do
         allow(story).to receive_messages(current_state: 'unstarted', story_type: 'release')
-        expect(trello).to receive(:create_card).with(core.options.release_list_id, story).and_return(card)
+        expect(trello).to receive(:create_card).with(core.options.release_list_id, story, 1).and_return(card)
         core.import!
       end
 

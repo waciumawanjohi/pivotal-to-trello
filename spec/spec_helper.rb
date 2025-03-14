@@ -33,11 +33,15 @@ def mock_pivotal_story(options = {})
     description:   'My Description',
     current_state: 'unstarted',
     story_type:    'feature',
+    id: 1234,
+    before_id: 1235,
   }.merge(options)
 
   story = double(TrackerApi::Resources::Story)
   allow(story).to receive(:comments).and_return([])
   allow(story).to receive(:tasks).and_return([])
+  allow(story).to receive(:respond_to?).and_return(false)
+  allow(story).to receive(:after_id).and_return(nil)
   options.each { |k, v| allow(story).to receive_messages(k => v) }
   story
 end

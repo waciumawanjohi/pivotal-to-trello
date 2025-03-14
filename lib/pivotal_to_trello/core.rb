@@ -19,6 +19,10 @@ module PivotalToTrello
       puts "\nBeginning import..."
       stories = pivotal.stories(options.pivotal_project_id)
 
+      if stories.empty?
+        return
+      end
+
       linking_map = stories.map { |story| [story.id, story.before_id] }.to_h
       pos_map = {}
       # find the first story, which is after no other story
@@ -35,6 +39,8 @@ module PivotalToTrello
         next unless list_id
         card    = trello.create_card(list_id, story, pos_map[story.id])
 
+        label_color = get_label_color(story, options)
+        trello.add_label(card, story.story_type, label_color) unless label_color.nil?
       end
     end
 
@@ -45,29 +51,30 @@ module PivotalToTrello
 
     # Returns the Trello list_id to import the given story into, based on the users input.
     def get_list_id(story, options)
-      list_id = nil
+      state_list_id_finder = {
+        'accepted' => options.accepted_list_id,
+        'rejected' => options.rejected_list_id,
+        'finished' => options.finished_list_id,
+        'delivered' => options.delivered_list_id,
+        'started' => options.current_list_id,
+        'unscheduled' => options.icebox_list_id,
+      }
+      state_list_id_finder.default = nil
 
-      if story.current_state == 'accepted'
-        list_id = options.accepted_list_id
-      elsif story.current_state == 'rejected'
-        list_id = options.rejected_list_id
-      elsif story.current_state == 'finished'
-        list_id = options.finished_list_id
-      elsif story.current_state == 'delivered'
-        list_id = options.delivered_list_id
-      elsif story.current_state == 'started'
-        list_id = options.current_list_id
-      elsif story.current_state == 'unscheduled'
-        list_id = options.icebox_list_id
-      elsif story.current_state == 'unstarted' && story.story_type == 'feature'
-        list_id = options.feature_list_id
-      elsif story.current_state == 'unstarted' && story.story_type == 'chore'
-        list_id = options.chore_list_id
-      elsif story.current_state == 'unstarted' && story.story_type == 'bug'
-        list_id = options.bug_list_id
-      elsif story.current_state == 'unstarted' && story.story_type == 'release'
-        list_id = options.release_list_id
+      type_list_id_finder = {
+        'feature' => options.feature_list_id,
+        'chore' => options.chore_list_id,
+        'bug' => options.bug_list_id,
+        'release' => options.release_list_id,
+      }
+
+      if story.current_state == 'unstarted'
+        list_id = type_list_id_finder[story.story_type]
       else
+        list_id = state_list_id_finder[story.current_state]
+      end
+
+      if list_id.nil?
         puts "Ignoring story #{story.id} - type is '#{story.story_type}', state is '#{story.current_state}'"
       end
 
