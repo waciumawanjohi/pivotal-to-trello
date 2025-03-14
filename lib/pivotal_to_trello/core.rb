@@ -17,6 +17,11 @@ module PivotalToTrello
       $stdout.sync = true
       prompt_for_details
 
+      if options.trello_deletion
+        puts "DELETING all cards in the Trello board"
+        trello.delete_all_cards(options.trello_board_id)
+      end
+
       puts "\nBeginning import..."
       puts "Preprocessing tracker stories..."
       stories = pivotal.stories(options.pivotal_project_id)
@@ -121,6 +126,8 @@ module PivotalToTrello
       options.feature_label      = prompt_selection('What color would you like to label features with?', trello.label_choices)
       options.chore_label        = prompt_selection('What color would you like to label chores with?', trello.label_choices)
       options.release_label      = prompt_selection('What color would you like to label releases with?', trello.label_choices)
+      options.trello_deletion    = prompt_selection('Do you want to delete all cards currently in the Trello Board?', trello.deletion_choices)
+
     end
 
     # Prompts the user to select an option from the given list of choices.

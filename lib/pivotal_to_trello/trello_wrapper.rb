@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'trello'
+require 'progress_bar'
 
 module PivotalToTrello
   # Interface to the Trello API.
@@ -101,6 +102,30 @@ module PivotalToTrello
         "lime" => "Lime",
         false    => '[do not create this label]',
       }
+    end
+
+    def deletion_choices
+      {
+        true => "Yes, DELETE EVERY CARD in the Trello board before beginning the import",
+        false => "No, do not any Trello cards",
+      }
+    end
+
+    def delete_all_cards(board_id)
+      list_ids = list_choices(board_id).keys
+      list_ids.each do |list_id|
+        next unless list_id
+        list = Trello::List.find(list_id)
+        cards = list.cards
+        next if cards.empty?
+        progress_bar = ProgressBar.new(cards.length)
+        progress_bar.puts "Deleting cards from #{list.name}"
+        list.cards.each do |card|
+          progress_bar.puts "Deleting: #{card.name}"
+          card.delete
+          progress_bar.increment!
+        end
+      end
     end
 
     private
