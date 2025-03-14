@@ -4,5 +4,5 @@ build-base:
     docker build -t pivotal-to-trello .
 build-test-base:
     docker build -t p2t-testbase -f DockerfileTestBase .
-test:
-    docker build -t p2t-test -f DockerfileTestFast . && docker run p2t-test
+test specfile=".":
+    docker build -t p2t-test -f DockerfileTestFast . && docker run p2t-test "{{specfile}}"
