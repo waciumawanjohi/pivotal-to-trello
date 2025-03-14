@@ -95,8 +95,14 @@ module PivotalToTrello
 
     # Copies notes from the pivotal story to the card.
     def create_comments(card, pivotal_story)
+      if card.respond_to?(:comments)
+        existing_comments = card.comments.map { |c| c.text}
+      end
       pivotal_story.comments.each do |comment|
-        card.add_comment(comment.text.to_s.strip.to_s) unless comment.text.to_s.strip.empty?
+        next if comment.text.to_s.strip.empty?
+        candidate_comment = comment.text.to_s.strip.to_s
+        next if existing_comments && existing_comments.include?(candidate_comment)
+        card.add_comment(candidate_comment)
       end
     end
 
