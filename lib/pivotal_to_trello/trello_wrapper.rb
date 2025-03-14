@@ -141,7 +141,8 @@ module PivotalToTrello
 
     def create_card_members(card, pivotal_story)
       if pivotal_story.respond_to?(:owners)
-        card_member_ids = card.members.map { |member| member.id}
+        card_members = card.members
+        card_member_ids = card_members.nil? ? [] : card.members.map { |member| member.id}
         pivotal_story.owners.each do |owner|
           candidate_member_id = owner_to_member()[owner.id]
           next if candidate_member_id.nil? || card_member_ids.include?(candidate_member_id)
@@ -151,7 +152,7 @@ module PivotalToTrello
     end
 
     def create_story_labels(card, pivotal_story)
-      if pivotal_story.respond_to?(:labels)
+      if pivotal_story.labels.is_a? Array
         pivotal_story.labels.each do |label|
           add_label(card, label.name, 'pink')
         end
