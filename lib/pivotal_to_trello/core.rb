@@ -13,6 +13,7 @@ module PivotalToTrello
 
     # Imports a Pivotal project into Trello.
     def import!
+      $stdout.sync = true
       prompt_for_details
 
       puts "\nBeginning import..."
