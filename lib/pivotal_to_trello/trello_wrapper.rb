@@ -28,6 +28,7 @@ module PivotalToTrello
       end
       create_comments(card, pivotal_story)
       create_tasks(card, pivotal_story)
+      create_card_members(card, pivotal_story)
 
       key                  = card_hash(card.name, card.desc)
       @cards             ||= {}
@@ -125,6 +126,30 @@ module PivotalToTrello
         puts " - Creating task '#{task.description}'"
         checklist.add_item(task.description, task.complete)
       end
+    end
+
+    def create_card_members(card, pivotal_story)
+      if pivotal_story.respond_to?(:owners)
+        card_member_ids = card.members.map { |member| member.id}
+        pivotal_story.owners.each do |owner|
+          candidate_member_id = owner_to_member()[owner.id]
+          next if candidate_member_id.nil? || card_member_ids.include?(candidate_member_id)
+          add_member(card, candidate_member_id)
+        end
+      end
+    end
+
+    def owner_to_member()
+      # Users can manually alter the code to add map from their Tracker User Id and their Trello Member ID
+      o_to_m = {
+      }
+      o_to_m.default = nil
+      o_to_m
+    end
+
+    def add_member(card, member_id)
+      member = Trello::Member.find(member_id)
+      card.add_member(member)
     end
 
     # Returns a unique identifier for this list/name/description combination.
