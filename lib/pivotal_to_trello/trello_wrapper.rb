@@ -24,11 +24,15 @@ module PivotalToTrello
           list_id: list_id,
           pos:     pos,
         )
+
         card
       end
+
       create_comments(card, pivotal_story)
       create_tasks(card, pivotal_story)
       create_card_members(card, pivotal_story)
+      create_story_labels(card, pivotal_story)
+      create_points_labels(card, pivotal_story)
 
       key                  = card_hash(card.name, card.desc)
       @cards             ||= {}
@@ -136,6 +140,20 @@ module PivotalToTrello
           next if candidate_member_id.nil? || card_member_ids.include?(candidate_member_id)
           add_member(card, candidate_member_id)
         end
+      end
+    end
+
+    def create_story_labels(card, pivotal_story)
+      if pivotal_story.respond_to?(:labels)
+        pivotal_story.labels.each do |label|
+          add_label(card, label.name, 'pink')
+        end
+      end
+    end
+
+    def create_points_labels(card, pivotal_story)
+      if pivotal_story.respond_to?(:estimate)
+        add_label(card, pivotal_story.estimate.to_i.to_s, 'green')
       end
     end
 
