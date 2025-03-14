@@ -86,13 +86,17 @@ module PivotalToTrello
     # Returns a list of colors that can be used to label cards.
     def label_choices
       {
-        'blue'   => 'Blue',
-        'green'  => 'Green',
-        'orange' => 'Orange',
-        'purple' => 'Purple',
-        'red'    => 'Red',
-        'yellow' => 'Yellow',
-        false    => '[none]',
+        "yellow" => "Yellow",
+        "purple" => "Purple",
+        "blue" => "Blue",
+        "red" => "Red",
+        "green" => "Green",
+        "orange" => "Orange",
+        "black" => "Black",
+        "sky" => "Sky",
+        "pink" => "Pink",
+        "lime" => "Lime",
+        false    => '[do not create this label]',
       }
     end
 
