@@ -29,15 +29,16 @@ describe 'TrelloWrapper' do
         name:    story.name,
         desc:    story.description,
         list_id: 'list_id',
+        pos:     2,
       ).and_return(card)
-      expect(wrapper.create_card('list_id', story)).to eq(card)
+      expect(wrapper.create_card('list_id', story, 2)).to eq(card)
     end
 
     it 'does not create a new card if one exists with the same name' do
       story = mock_pivotal_story(name: 'My Card')
       allow(Trello::List).to receive_message_chain(:find, :cards).and_return([card])
       expect(Trello::Card).not_to receive(:create)
-      expect(wrapper.create_card('list_id', story)).to eq(card)
+      expect(wrapper.create_card('list_id', story, 1)).to eq(card)
     end
 
     it 'creates a new card if one exists with a different name' do
@@ -47,8 +48,9 @@ describe 'TrelloWrapper' do
         name:    story.name,
         desc:    story.description,
         list_id: 'list_id',
+        pos:     8,
       ).and_return(card)
-      expect(wrapper.create_card('list_id', story)).to eq(card)
+      expect(wrapper.create_card('list_id', story, 8)).to eq(card)
     end
 
     it 'adds comments' do
@@ -58,7 +60,7 @@ describe 'TrelloWrapper' do
       expect(wrapper).to receive(:get_card).and_return(nil)
       expect(Trello::Card).to receive(:create).and_return(card)
       expect(card).to receive(:add_comment).with('My Note')
-      expect(wrapper.create_card('list_id', story)).to eq(card)
+      expect(wrapper.create_card('list_id', story, 10)).to eq(card)
     end
 
     it 'adds tasks' do

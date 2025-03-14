@@ -17,13 +17,24 @@ module PivotalToTrello
       prompt_for_details
 
       puts "\nBeginning import..."
-      pivotal.stories(options.pivotal_project_id).each do |story|
+      stories = pivotal.stories(options.pivotal_project_id)
+
+      linking_map = stories.map { |story| [story.id, story.before_id] }.to_h
+      pos_map = {}
+      # find the first story, which is after no other story
+      story_id = stories.find { |story| story.after_id.nil? }.id
+      i = 1
+      while story_id
+        pos_map[story_id] = i
+        i += 1
+        story_id = linking_map[story_id]
+      end
+
+      stories.each do |story|
         list_id = get_list_id(story, options)
         next unless list_id
+        card    = trello.create_card(list_id, story, pos_map[story.id])
 
-        card        = trello.create_card(list_id, story)
-        label_color = get_label_color(story, options)
-        trello.add_label(card, story.story_type, label_color) unless label_color.nil?
       end
     end
 

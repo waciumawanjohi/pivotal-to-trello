@@ -14,7 +14,7 @@ module PivotalToTrello
     end
 
     # Creates a card in the given list if one with the same name doesn't already exist.
-    def create_card(list_id, pivotal_story)
+    def create_card(list_id, pivotal_story, pos)
       card   = get_card(list_id, pivotal_story.name, pivotal_story.description)
       card ||= begin
         puts "Creating a card for #{pivotal_story.story_type} '#{pivotal_story.name}'."
@@ -22,12 +22,12 @@ module PivotalToTrello
           name:    pivotal_story.name,
           desc:    pivotal_story.description,
           list_id: list_id,
+          pos:     pos,
         )
-
-        create_comments(card, pivotal_story)
-        create_tasks(card, pivotal_story)
         card
       end
+      create_comments(card, pivotal_story)
+      create_tasks(card, pivotal_story)
 
       key                  = card_hash(card.name, card.desc)
       @cards             ||= {}
