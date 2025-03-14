@@ -24,6 +24,7 @@ module PivotalToTrello
 
       puts "\nBeginning import..."
       puts "Preprocessing tracker stories..."
+
       stories = pivotal.stories(options.pivotal_project_id)
 
       if stories.empty?
@@ -41,12 +42,16 @@ module PivotalToTrello
         story_id = linking_map[story_id]
       end
 
+
       progress_bar = ProgressBar.new(stories.length)
       progress_bar.puts "\nSending stories to Trello"
+
       stories.each do |story|
         progress_bar.increment!
+
         list_id = get_list_id(story, options)
         next unless list_id
+
         card    = trello.create_card(list_id, story, pos_map[story.id], progress_bar)
 
         label_color = get_label_color(story, options)
