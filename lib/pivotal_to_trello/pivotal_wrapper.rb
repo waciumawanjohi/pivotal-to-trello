@@ -22,6 +22,11 @@ module PivotalToTrello
       @client.project(project_id).stories(fields: ':default,before_id,after_id')
     end
 
+    # Takes a list of ids and returns an array of PivotalStory objects
+    def get_stories_by_ids(story_ids)
+      story_ids.map { |id| @client.story(id) }
+    end
+
     # Returns the Pivotal project that we're exporting.
     def project(project_id)
       @projects             ||= {}
