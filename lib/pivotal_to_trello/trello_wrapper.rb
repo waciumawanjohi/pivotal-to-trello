@@ -14,16 +14,19 @@ module PivotalToTrello
     end
 
     # Creates a card in the given list if one with the same name doesn't already exist.
-    def create_card(list_id, pivotal_story, pos)
+    def create_card(list_id, pivotal_story, pos, logger)
+      @logger ||= logger
       card   = get_card(list_id, pivotal_story.name, pivotal_story.description)
       card ||= begin
-        puts "Creating a card for #{pivotal_story.story_type} '#{pivotal_story.name}'."
-        card = Trello::Card.create(
-          name:    pivotal_story.name,
-          desc:    pivotal_story.description,
-          list_id: list_id,
-          pos:     pos,
-        )
+        @logger.puts "Creating a card for #{pivotal_story.story_type} '#{pivotal_story.name}'."
+        card = retry_with_exponential_backoff( Proc.new {
+          Trello::Card.create(
+            name:    pivotal_story.name,
+            desc:    pivotal_story.description,
+            list_id: list_id,
+            pos:     pos,
+          )
+        })
 
         card
       end
@@ -111,7 +114,7 @@ module PivotalToTrello
         next if comment.text.to_s.strip.empty?
         candidate_comment = comment.text.to_s.strip.to_s
         next if existing_comments && existing_comments.include?(candidate_comment)
-        card.add_comment(candidate_comment)
+        retry_with_exponential_backoff( Proc.new {card.add_comment(candidate_comment) })
       end
     end
 
@@ -122,8 +125,8 @@ module PivotalToTrello
 
       checklist = card.checklists.find { |checklist| checklist.name == 'Tasks' }
       if !checklist
-        checklist = Trello::Checklist.create(name: 'Tasks', card_id: card.id)
-        card.add_checklist(checklist)
+        checklist = retry_with_exponential_backoff( Proc.new {Trello::Checklist.create(name: 'Tasks', card_id: card.id) })
+        retry_with_exponential_backoff( Proc.new { card.add_checklist(checklist) })
       end
 
       checklist_task_names = checklist.items.map { |item| item.name }
@@ -131,8 +134,8 @@ module PivotalToTrello
       tasks.each do |task|
         next if checklist_task_names.include?(task.description)
 
-        puts " - Creating task '#{task.description}'"
-        checklist.add_item(task.description, task.complete)
+        @logger.puts " - Creating task '#{task.description}'"
+        retry_with_exponential_backoff( Proc.new {checklist.add_item(task.description, task.complete) })
       end
     end
 
@@ -171,7 +174,7 @@ module PivotalToTrello
 
     def add_member(card, member_id)
       member = Trello::Member.find(member_id)
-      card.add_member(member)
+      retry_with_exponential_backoff( Proc.new { card.add_member(member) })
     end
 
     # Returns a unique identifier for this list/name/description combination.
@@ -183,6 +186,37 @@ module PivotalToTrello
     def get_card(list_id, name, description)
       key = card_hash(name, description)
       cards_for_list(list_id)[key] unless cards_for_list(list_id)[key].nil?
+    end
+
+    def retry_with_exponential_backoff(function)
+      current_retries = 0
+      result = nil
+      begin
+        result = function.call
+      rescue StandardError => e
+        should_retry, current_retries = should_retry?(current_retries, e)
+        retry if should_retry
+      rescue SocketError => e
+        should_retry, current_retries = should_retry?(current_retries, e)
+        retry if should_retry
+      end
+
+      result
+    end
+
+    def should_retry?(current_retries, e)
+      max_retries = 7
+      base_delay = 30
+      if current_retries < max_retries
+        current_retries += 1
+        delay = base_delay * (2 ** (current_retries - 1))
+        @logger.puts "Retrying (#{current_retries}/#{max_retries}) after #{delay} seconds due to: #{e.class} - #{e.message}"
+        sleep(delay)
+        return true, current_retries
+      else
+        @logger.puts "Maximum number of retries reached. Error: #{e.message}"
+        raise e
+      end
     end
   end
 end
