@@ -150,7 +150,11 @@ module PivotalToTrello
       tasks = pivotal_story.tasks
       return if tasks.empty?
 
-      checklist = card.checklists.find { |checklist| checklist.name == 'Tasks' }
+      checklist = nil
+
+      if card.respond_to?(:checklists) && !card.checklists.nil?
+        checklist = card.checklists.find { |checklist| checklist.name == 'Tasks' }
+      end
       if !checklist
         checklist = retry_with_exponential_backoff( Proc.new {Trello::Checklist.create(name: 'Tasks', card_id: card.id) })
         retry_with_exponential_backoff( Proc.new { card.add_checklist(checklist) })
@@ -169,8 +173,11 @@ module PivotalToTrello
     def create_card_members(card, pivotal_story)
       @logger.puts "Adding members to card: '#{card.name}'"
       if pivotal_story.respond_to?(:owners)
-        card_members = card.members
-        card_member_ids = card_members.nil? ? [] : card.members.map { |member| member.id}
+        if card.respond_to?(:members) && !card.members.nil?
+          card_member_ids = card.members.map { |member| member.id}
+        else
+          card_member_ids = []
+        end
         pivotal_story.owners.each do |owner|
           candidate_member_id = owner_to_member()[owner.id]
           next if candidate_member_id.nil? || card_member_ids.include?(candidate_member_id)
