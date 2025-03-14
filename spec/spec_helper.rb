@@ -48,6 +48,7 @@ def mock_trello_card(options = {})
     name:     'My Card',
     desc:     'My Description',
     board_id: 1_234_321,
+    checklists: [],
   }.merge(options)
   card = double(Trello::Card)
   options.each { |k, v| allow(card).to receive_messages(k => v) }

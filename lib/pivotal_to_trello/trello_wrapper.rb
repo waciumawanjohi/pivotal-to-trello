@@ -111,10 +111,17 @@ module PivotalToTrello
       tasks = pivotal_story.tasks
       return if tasks.empty?
 
-      checklist = Trello::Checklist.create(name: 'Tasks', card_id: card.id)
-      card.add_checklist(checklist)
+      checklist = card.checklists.find { |checklist| checklist.name == 'Tasks' }
+      if !checklist
+        checklist = Trello::Checklist.create(name: 'Tasks', card_id: card.id)
+        card.add_checklist(checklist)
+      end
+
+      checklist_task_names = checklist.items.map { |item| item.name }
 
       tasks.each do |task|
+        next if checklist_task_names.include?(task.description)
+
         puts " - Creating task '#{task.description}'"
         checklist.add_item(task.description, task.complete)
       end
