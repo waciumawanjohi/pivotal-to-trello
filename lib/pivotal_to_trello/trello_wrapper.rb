@@ -139,7 +139,8 @@ module PivotalToTrello
       if card.respond_to?(:comments)
         existing_comments = card.comments.map { |c| c.text}
       end
-      pivotal_story.comments.each do |comment|
+      story_comments = retry_with_exponential_backoff( Proc.new { pivotal_story.comments })
+      story_comments.each do |comment|
         next if comment.text.to_s.strip.empty?
         candidate_comment = comment.text.to_s.strip.to_s
         next if existing_comments && existing_comments.include?(candidate_comment)
@@ -150,7 +151,7 @@ module PivotalToTrello
     # Copies notes from the pivotal story to the card.
     def create_tasks(card, pivotal_story)
       @logger.puts "Creating tasks for card: '#{card.name}'"
-      tasks = pivotal_story.tasks
+      tasks = retry_with_exponential_backoff( Proc.new { pivotal_story.tasks })
       return if tasks.empty?
 
       checklist = nil
@@ -176,12 +177,14 @@ module PivotalToTrello
     def create_card_members(card, pivotal_story)
       @logger.puts "Adding members to card: '#{card.name}'"
       if pivotal_story.respond_to?(:owners)
-        if card.respond_to?(:members) && !card.members.nil?
-          card_member_ids = card.members.map { |member| member.id}
+        if card.respond_to?(:members)
+          card_members = retry_with_exponential_backoff( Proc.new { card.members })
+          card_member_ids = card_members.nil? ? [] : card.members.map { |member| member.id}
         else
           card_member_ids = []
         end
-        pivotal_story.owners.each do |owner|
+        pivotal_owners = retry_with_exponential_backoff( Proc.new { pivotal_story.owners })
+        pivotal_owners.each do |owner|
           candidate_member_id = owner_to_member()[owner.id]
           next if candidate_member_id.nil? || card_member_ids.include?(candidate_member_id)
           add_member(card, candidate_member_id)
@@ -214,7 +217,7 @@ module PivotalToTrello
     end
 
     def add_member(card, member_id)
-      member = Trello::Member.find(member_id)
+      member = retry_with_exponential_backoff( Proc.new { Trello::Member.find(member_id) })
       retry_with_exponential_backoff( Proc.new { card.add_member(member) })
     end
 
@@ -237,7 +240,7 @@ module PivotalToTrello
       rescue StandardError => e
         should_retry, current_retries = should_retry?(current_retries, e)
         retry if should_retry
-      rescue SocketError => e
+      rescue RestClient::Exceptions::OpenTimeout => e
         should_retry, current_retries = should_retry?(current_retries, e)
         retry if should_retry
       end
