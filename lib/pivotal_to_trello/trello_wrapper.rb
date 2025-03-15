@@ -35,6 +35,7 @@ module PivotalToTrello
         card
       end
 
+      ensure_position_is_correct(card, pos)
       create_comments(card, pivotal_story)
       create_tasks(card, pivotal_story)
       create_card_members(card, pivotal_story)
@@ -189,6 +190,14 @@ module PivotalToTrello
           next if candidate_member_id.nil? || card_member_ids.include?(candidate_member_id)
           add_member(card, candidate_member_id)
         end
+      end
+    end
+
+    def ensure_position_is_correct(card, pos)
+      @logger.puts "Checking position of card: '#{card.name}'"
+      if card.pos != pos
+        @logger.puts "Updating pos from #{card.pos} to #{pos}"
+        retry_with_exponential_backoff( Proc.new { card.pos = pos })
       end
     end
 
