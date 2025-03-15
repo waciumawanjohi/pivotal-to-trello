@@ -78,3 +78,9 @@ def mock_options
                  chore_label:        'chore_label',
                  release_label:      'release_label')
 end
+
+def mock_logger
+  logger = double('my_logger')
+  allow(logger).to receive(:puts)
+  logger
+end

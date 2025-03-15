@@ -14,9 +14,12 @@ module PivotalToTrello
       end
     end
 
-    # Creates a card in the given list if one with the same name doesn't already exist.
-    def create_card(list_id, pivotal_story, pos, logger)
+    def add_logger(logger)
       @logger ||= logger
+    end
+
+    # Creates a card in the given list if one with the same name doesn't already exist.
+    def create_card(list_id, pivotal_story, pos)
       card   = get_card(list_id, pivotal_story.name, pivotal_story.description)
       card ||= begin
         @logger.puts "Creating a card for #{pivotal_story.story_type} '#{pivotal_story.name}'."

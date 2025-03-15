@@ -7,6 +7,7 @@ describe 'TrelloWrapper' do
 
   before(:each) do
     allow_any_instance_of(IO).to receive(:puts)
+    wrapper.add_logger(mock_logger)
   end
 
   context '#initialize' do

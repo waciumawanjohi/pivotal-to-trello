@@ -46,6 +46,7 @@ module PivotalToTrello
       stories_to_process = stories.filter { |story| starting_story_id < story.id }
 
       progress_bar = ProgressBar.new(stories_to_process.length)
+      trello.add_logger(progress_bar)
       progress_bar.puts "\nSending stories to Trello"
 
       stories_to_process.each do |story|
@@ -54,9 +55,9 @@ module PivotalToTrello
         list_id = get_list_id(story, options)
         next unless list_id
 
-        card    = trello.create_card(list_id, story, pos_map[story.id], progress_bar)
         progress_bar.puts "Processing: #{story.id}"
 
+        card    = trello.create_card(list_id, story, pos_map[story.id])
 
         label_color = get_label_color(story, options)
         trello.add_label(card, story.story_type, label_color) unless label_color.nil?
