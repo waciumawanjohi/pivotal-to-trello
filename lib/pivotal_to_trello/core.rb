@@ -160,7 +160,7 @@ module PivotalToTrello
 
     def handle_untouched_trello_cards
       cards = trello.get_cards_untouched_this_run
-      return unless cards.length > 0
+      return if cards.length == 0
 
       puts "Found #{cards.length} cards in trello that did not match any story imported from pivotal tracker."
 
