@@ -256,7 +256,7 @@ module PivotalToTrello
 
     def ensure_list_is_correct(card,list_id)
       if card.list_id != list_id
-        puts "Moving '#{card.name}' from #{card.list.name} to #{Trello::List.find(list_id).name}"
+        @logger.puts "Moving '#{card.name}' from #{card.list.name} to #{Trello::List.find(list_id).name}"
         card.move_to_list(list_id)
       end
     end
