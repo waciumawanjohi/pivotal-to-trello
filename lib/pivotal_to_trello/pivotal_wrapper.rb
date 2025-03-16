@@ -17,9 +17,16 @@ module PivotalToTrello
       end
     end
 
+    def add_project(project_id)
+      @project_id = project_id
+    end
+
     # Returns all stories for the given project.
-    def stories(project_id)
-      @client.project(project_id).stories(fields: ':default,before_id,after_id').sort_by(&:id)
+    def stories
+      @stories = @client.project(@project_id).stories(fields: ':default,before_id,after_id').sort_by(&:id)
+      create_story_order_map
+      @stories
+    end
     end
 
     # Takes a list of ids and returns an array of PivotalStory objects
@@ -28,9 +35,9 @@ module PivotalToTrello
     end
 
     # Returns the Pivotal project that we're exporting.
-    def project(project_id)
+    def project
       @projects             ||= {}
-      @projects[project_id] ||= @client.project(project_id)
+      @projects[project_id] ||= @client.project(@project_id)
     end
   end
 end

@@ -14,8 +14,13 @@ module PivotalToTrello
       end
     end
 
-    def ensure_lists_and_cards_cached(board_id)
-      @lists           ||= retry_with_exponential_backoff( Proc.new { Trello::Board.find(board_id).lists })
+    def add_board(board_id)
+      @board_id = board_id
+      ensure_lists_and_cards_cached
+    end
+
+    def ensure_lists_and_cards_cached
+      @lists           ||= retry_with_exponential_backoff( Proc.new { Trello::Board.find(@board_id).lists })
       @card_array = @lists.flat_map { |list| Trello::List.find(list.id).cards.map(&:itself) }
       @cards   ||= @card_array.map { |card| [card_hash(card.name, card.desc), card] }.to_h
     end
@@ -71,8 +76,7 @@ module PivotalToTrello
     end
 
     # Returns a hash of available lists for the given board, keyed on board ID.
-    def list_choices(board_id)
-      ensure_lists_and_cards_cached(board_id)
+    def list_choices
       choices = @lists.each_with_object({}) do |list, hash|
         hash[list.id] = list.name
       end

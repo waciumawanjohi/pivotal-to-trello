@@ -15,6 +15,7 @@ module PivotalToTrello
     # Imports a Pivotal project into Trello.
     def import!
       $stdout.sync = true
+      prompt_for_project_and_board
       prompt_for_details
 
       if options.trello_deletion
@@ -28,7 +29,7 @@ module PivotalToTrello
       puts "\nBeginning import..."
       puts "Preprocessing tracker stories..."
 
-      stories = pivotal.stories(options.pivotal_project_id)
+      stories = pivotal.stories
 
       if stories.empty?
         return
@@ -124,20 +125,24 @@ module PivotalToTrello
       label_color
     end
 
+    # Prompts the user for target export project and import board
+    def prompt_for_project_and_board
+      pivotal.add_project(prompt_selection('Which Pivotal project would you like to export?', pivotal.project_choices))
+      trello.add_board(prompt_selection('Which Trello board would you like to import into?', trello.board_choices))
+    end
+
     # Prompts the user for details about the import/export.
     def prompt_for_details
-      options.pivotal_project_id = prompt_selection('Which Pivotal project would you like to export?', pivotal.project_choices)
-      options.trello_board_id    = prompt_selection('Which Trello board would you like to import into?', trello.board_choices)
-      options.icebox_list_id     = prompt_selection("Which Trello list would you like to put 'icebox' stories into?", trello.list_choices(options.trello_board_id))
-      options.current_list_id    = prompt_selection("Which Trello list would you like to put 'current' stories into?", trello.list_choices(options.trello_board_id))
-      options.finished_list_id   = prompt_selection("Which Trello list would you like to put 'finished' stories into?", trello.list_choices(options.trello_board_id))
-      options.delivered_list_id  = prompt_selection("Which Trello list would you like to put 'delivered' stories into?", trello.list_choices(options.trello_board_id))
-      options.accepted_list_id   = prompt_selection("Which Trello list would you like to put 'accepted' stories into?", trello.list_choices(options.trello_board_id))
-      options.rejected_list_id   = prompt_selection("Which Trello list would you like to put 'rejected' stories into?", trello.list_choices(options.trello_board_id))
-      options.bug_list_id        = prompt_selection("Which Trello list would you like to put 'backlog' bugs into?", trello.list_choices(options.trello_board_id))
-      options.chore_list_id      = prompt_selection("Which Trello list would you like to put 'backlog' chores into?", trello.list_choices(options.trello_board_id))
-      options.feature_list_id    = prompt_selection("Which Trello list would you like to put 'backlog' features into?", trello.list_choices(options.trello_board_id))
-      options.release_list_id    = prompt_selection("Which Trello list would you like to put 'backlog' releases into?", trello.list_choices(options.trello_board_id))
+      options.icebox_list_id     = prompt_selection("Which Trello list would you like to put 'icebox' stories into?", trello.list_choices)
+      options.current_list_id    = prompt_selection("Which Trello list would you like to put 'current' stories into?", trello.list_choices)
+      options.finished_list_id   = prompt_selection("Which Trello list would you like to put 'finished' stories into?", trello.list_choices)
+      options.delivered_list_id  = prompt_selection("Which Trello list would you like to put 'delivered' stories into?", trello.list_choices)
+      options.accepted_list_id   = prompt_selection("Which Trello list would you like to put 'accepted' stories into?", trello.list_choices)
+      options.rejected_list_id   = prompt_selection("Which Trello list would you like to put 'rejected' stories into?", trello.list_choices)
+      options.bug_list_id        = prompt_selection("Which Trello list would you like to put 'backlog' bugs into?", trello.list_choices)
+      options.chore_list_id      = prompt_selection("Which Trello list would you like to put 'backlog' chores into?", trello.list_choices)
+      options.feature_list_id    = prompt_selection("Which Trello list would you like to put 'backlog' features into?", trello.list_choices)
+      options.release_list_id    = prompt_selection("Which Trello list would you like to put 'backlog' releases into?", trello.list_choices)
       options.bug_label          = prompt_selection('What color would you like to label bugs with?', trello.label_choices)
       options.feature_label      = prompt_selection('What color would you like to label features with?', trello.label_choices)
       options.chore_label        = prompt_selection('What color would you like to label chores with?', trello.label_choices)
