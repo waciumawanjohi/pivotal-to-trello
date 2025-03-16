@@ -15,12 +15,13 @@ module PivotalToTrello
     end
 
     def add_board(board_id)
-      @board_id = board_id
+      @board_id ||= board_id
+      @board ||= Trello::Board.find(@board_id)
       ensure_lists_and_cards_cached
     end
 
     def ensure_lists_and_cards_cached
-      @lists           ||= retry_with_exponential_backoff( Proc.new { Trello::Board.find(@board_id).lists })
+      @lists           ||= retry_with_exponential_backoff( Proc.new { @board.lists })
       @card_array = @lists.flat_map { |list| Trello::List.find(list.id).cards.map(&:itself) }
       @cards   ||= @card_array.map { |card| [card_hash(card.name, card.desc), card] }.to_h
     end
@@ -43,6 +44,14 @@ module PivotalToTrello
 
     def add_pivotal_owner_to_trello_member_map(o2m_map)
       @owner_to_member = o2m_map
+    end
+
+    def get_board_name
+      @board.name
+    end
+
+    def get_board_url
+      @board.url
     end
 
     # Creates a card in the given list if one with the same name doesn't already exist.
@@ -170,7 +179,7 @@ module PivotalToTrello
     end
 
     def get_board_members
-      retry_with_exponential_backoff( Proc.new { Trello::Board.find(@board_id).members })
+      retry_with_exponential_backoff( Proc.new { @board.members })
     end
 
     private
