@@ -14,6 +14,11 @@ module PivotalToTrello
       end
     end
 
+    def ensure_lists_and_cards_cached(board_id)
+      @lists           ||= retry_with_exponential_backoff( Proc.new { Trello::Board.find(board_id).lists })
+
+    end
+
     def add_logger(logger)
       @logger ||= logger
     end
@@ -62,18 +67,13 @@ module PivotalToTrello
 
     # Returns a hash of available lists for the given board, keyed on board ID.
     def list_choices(board_id)
-      # Cache the list to improve performance.
-      @lists           ||= {}
-      @lists[board_id] ||= begin
-        choices = Trello::Board.find(board_id).lists.each_with_object({}) do |list, hash|
-          hash[list.id] = list.name
-        end
-        choices = Hash[choices.sort_by { |_, v| v }]
-        choices[false] = "[don't import these stories]"
-        choices
+      ensure_lists_and_cards_cached(board_id)
+      choices = @lists.each_with_object({}) do |list, hash|
+        hash[list.id] = list.name
       end
-
-      @lists[board_id]
+      choices = Hash[choices.sort_by { |_, v| v }]
+      choices[false] = "[don't import these stories]"
+      choices
     end
 
     # Returns a hashmap of all cards in the given list, keyed on hashed name/description.
@@ -138,10 +138,9 @@ module PivotalToTrello
       retry_with_exponential_backoff( Proc.new { card.delete })
     end
 
-    def delete_all_lists(board_id)
-      list_ids = list_choices(board_id).keys.filter { |list| list }
-      list_ids.each do |list_id|
-        list = retry_with_exponential_backoff( Proc.new { list.delete })
+    def delete_all_lists
+      @lists.each do |list|
+        retry_with_exponential_backoff( Proc.new { list.delete })
       end
     end
 
@@ -153,7 +152,7 @@ module PivotalToTrello
     private
 
     def get_all_cards_in_trello(board_id)
-      list_ids = list_choices(board_id).keys.filter { |list| list }
+      list_ids = @lists.map { |list| list.id }
       list_ids.reduce([]) { |cards, list_id| cards.concat(cards_for_list(list_id).values)}
     end
 
