@@ -46,6 +46,7 @@ module PivotalToTrello
         })
       end
 
+      ensure_list_is_correct(card,list_id)
       ensure_position_is_correct(card, pos)
       create_comments(card, pivotal_story)
       create_tasks(card, pivotal_story)
@@ -213,6 +214,13 @@ module PivotalToTrello
           next if candidate_member_id.nil? || card_member_ids.include?(candidate_member_id)
           add_member(card, candidate_member_id)
         end
+      end
+    end
+
+    def ensure_list_is_correct(card,list_id)
+      if card.list_id != list_id
+        puts "Moving '#{card.name}' from #{card.list.name} to #{Trello::List.find(list_id).name}"
+        card.move_to_list(list_id)
       end
     end
 
