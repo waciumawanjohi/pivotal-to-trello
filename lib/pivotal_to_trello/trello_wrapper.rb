@@ -16,7 +16,7 @@ module PivotalToTrello
 
     def ensure_lists_and_cards_cached(board_id)
       @lists           ||= retry_with_exponential_backoff( Proc.new { Trello::Board.find(board_id).lists })
-
+      @all_cards       ||= @lists.flat_map { |list| Trello::List.find(list.id).cards.map(&:itself) }
     end
 
     def add_logger(logger)
@@ -120,9 +120,8 @@ module PivotalToTrello
       }
     end
 
-    def delete_all_cards(board_id)
-      cards = get_all_cards_in_trello(board_id)
-      delete_cards(cards)
+    def delete_all_cards
+      delete_cards(@all_cards)
     end
 
     def delete_cards(cards)
@@ -145,16 +144,10 @@ module PivotalToTrello
     end
 
     def get_cards_untouched_this_run(board_id)
-      all_cards = get_all_cards_in_trello(board_id)
-      all_cards.filter { |card| @touched_cards.exclude?(card.id) }
+      @all_cards.filter { |card| @touched_cards.exclude?(card.id) }
     end
 
     private
-
-    def get_all_cards_in_trello(board_id)
-      list_ids = @lists.map { |list| list.id }
-      list_ids.reduce([]) { |cards, list_id| cards.concat(cards_for_list(list_id).values)}
-    end
 
     # Copies notes from the pivotal story to the card.
     def create_comments(card, pivotal_story)
