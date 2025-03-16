@@ -18,8 +18,9 @@ module PivotalToTrello
       prompt_for_details
 
       if options.trello_deletion
-        puts "DELETING all cards in the Trello board"
-        trello.delete_all_cards(options.trello_board_id)
+        if agree("Confirm: Do you want to delete all cards currently in the Trello board?")
+          trello.delete_all_cards(options.trello_board_id)
+        end
       end
 
       puts "\nBeginning import..."
