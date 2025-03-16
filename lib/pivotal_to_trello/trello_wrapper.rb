@@ -37,9 +37,8 @@ module PivotalToTrello
       @logger ||= logger
     end
 
-    def add_label_colors(tracker_label_color, estimate_color)
-      @tracker_label_color = tracker_label_color
-      @estimate_color      = estimate_color
+    def add_label_colors(label_colors)
+      @label_colors ||= label_colors
     end
 
     def add_pivotal_owner_to_trello_member_map(o2m_map)
@@ -279,10 +278,10 @@ module PivotalToTrello
     end
 
     def create_story_labels(card, pivotal_story)
-      @logger.puts "Creating adding labels to card: '#{card.name}'"
+      @logger.puts "Creating labels for card: '#{card.name}'"
       if pivotal_story.labels.is_a? Array
         pivotal_story.labels.each do |label|
-          add_label(card, label.name, @tracker_label_color)
+          add_label(card, label.name, @label_colors["tracker labels"])
         end
       end
     end
@@ -290,7 +289,7 @@ module PivotalToTrello
     def create_points_labels(card, pivotal_story)
       @logger.puts "Adding points to card: '#{card.name}'"
       if pivotal_story.respond_to?(:estimate)
-        add_label(card, pivotal_story.estimate.to_i.to_s, @estimate_color)
+        add_label(card, pivotal_story.estimate.to_i.to_s, @label_colors["estimate"])
       end
     end
 
