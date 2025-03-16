@@ -16,14 +16,14 @@ module PivotalToTrello
 
     def add_board(board_id)
       @board_id ||= board_id
-      @board ||= Trello::Board.find(@board_id)
+      @board    ||= Trello::Board.find(@board_id)
       ensure_lists_and_cards_cached
     end
 
     def ensure_lists_and_cards_cached
-      @lists           ||= retry_with_exponential_backoff( Proc.new { @board.lists })
-      @card_array = @lists.flat_map { |list| Trello::List.find(list.id).cards.map(&:itself) }
-      @cards   ||= @card_array.map { |card| [card_hash(card.name, card.desc), card] }.to_h
+      @lists      ||= retry_with_exponential_backoff( Proc.new { @board.lists })
+      @card_array ||= @lists.flat_map { |list| Trello::List.find(list.id).cards.map(&:itself) }
+      @cards      ||= @card_array.map { |card| [card_hash(card.name, card.desc), card] }.to_h
     end
 
     def get_duplicate_trello_cards
@@ -42,7 +42,7 @@ module PivotalToTrello
     end
 
     def add_pivotal_owner_to_trello_member_map(o2m_map)
-      @owner_to_member = o2m_map
+      @owner_to_member ||= o2m_map
     end
 
     def get_board_name
@@ -168,7 +168,7 @@ module PivotalToTrello
     end
 
     def pretty_print_card(card)
-      puts <<-MULTILINE
+      puts <<~MULTILINE
       Name:        #{card.name}
       Description: #{card.desc}
       List:        #{card.list.name}
