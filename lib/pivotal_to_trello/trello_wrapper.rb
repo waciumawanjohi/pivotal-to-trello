@@ -16,7 +16,10 @@ module PivotalToTrello
 
     def ensure_lists_and_cards_cached(board_id)
       @lists           ||= retry_with_exponential_backoff( Proc.new { Trello::Board.find(board_id).lists })
-      @all_cards       ||= @lists.flat_map { |list| Trello::List.find(list.id).cards.map(&:itself) }
+      @cards           ||= begin
+        card_array = @lists.flat_map { |list| Trello::List.find(list.id).cards.map(&:itself) }
+        card_array.map { |card| [card_hash(card.name, card.desc), card] }.to_h
+      end
     end
 
     def add_logger(logger)
@@ -25,7 +28,7 @@ module PivotalToTrello
 
     # Creates a card in the given list if one with the same name doesn't already exist.
     def create_card(list_id, pivotal_story, pos)
-      card   = get_card(list_id, pivotal_story.name, pivotal_story.description)
+      card   = @cards[card_hash(pivotal_story.name, pivotal_story.description)]
       card ||= begin
         @logger.puts "Creating a card for #{pivotal_story.story_type} '#{pivotal_story.name}'."
         card = retry_with_exponential_backoff( Proc.new {
@@ -48,11 +51,9 @@ module PivotalToTrello
       create_points_labels(card, pivotal_story)
 
       key                  = card_hash(card.name, card.desc)
-      @cards             ||= {}
-      @cards[list_id]    ||= {}
-      @cards[list_id][key] = card
+      @cards[key]          = card
 
-      @touched_cards ||= []
+      @touched_cards     ||= []
       @touched_cards.push(card.id)
 
       card
@@ -74,16 +75,6 @@ module PivotalToTrello
       choices = Hash[choices.sort_by { |_, v| v }]
       choices[false] = "[don't import these stories]"
       choices
-    end
-
-    # Returns a hashmap of all cards in the given list, keyed on hashed name/description.
-    def cards_for_list(list_id)
-      @cards          ||= {}
-      @cards[list_id] ||= Trello::List.find(list_id).cards.each_with_object({}) do |card, hash|
-        hash[card_hash(card.name, card.desc)] = card
-      end
-
-      @cards[list_id]
     end
 
     # Adds the given label to the card.
@@ -121,7 +112,7 @@ module PivotalToTrello
     end
 
     def delete_all_cards
-      delete_cards(@all_cards)
+      delete_cards(@cards.values)
     end
 
     def delete_cards(cards)
@@ -143,8 +134,8 @@ module PivotalToTrello
       end
     end
 
-    def get_cards_untouched_this_run(board_id)
-      @all_cards.filter { |card| @touched_cards.exclude?(card.id) }
+    def get_cards_untouched_this_run
+      @cards.values.filter { |card| @touched_cards.exclude?(card.id) }
     end
 
     private
@@ -248,12 +239,6 @@ module PivotalToTrello
     # Returns a unique identifier for this list/name/description combination.
     def card_hash(name, description)
       Digest::SHA1.hexdigest("#{name}_#{description}")
-    end
-
-    # Returns a card with the given name and description if it exists in the given list, nil otherwise.
-    def get_card(list_id, name, description)
-      key = card_hash(name, description)
-      cards_for_list(list_id)[key] unless cards_for_list(list_id)[key].nil?
     end
 
     def retry_with_exponential_backoff(function)
