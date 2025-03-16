@@ -94,11 +94,9 @@ module PivotalToTrello
 
     # Returns a hash of available lists for the given board, keyed on board ID.
     def list_choices
-      choices = @lists.each_with_object({}) do |list, hash|
-        hash[list.id] = list.name
-      end
-      choices = Hash[choices.sort_by { |_, v| v }]
-      choices[false] = "[don't import these stories]"
+      lists_in_order = @lists.sort_by { |list| [list.pos]}
+      choices = lists_in_order.to_h { |list| [list.id, list.name] }
+      choices[nil] = "[do not import these stories]"
       choices
     end
 
