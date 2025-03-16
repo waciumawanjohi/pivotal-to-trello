@@ -63,6 +63,9 @@ module PivotalToTrello
         label_color = get_label_color(story, options)
         trello.add_label(card, story.story_type, label_color) unless label_color.nil?
       end
+      puts "Import complete"
+      handle_untouched_trello_cards
+      puts "Done!"
     end
 
     # Returns the options struct.
@@ -151,6 +154,48 @@ module PivotalToTrello
           menu.choice value do
             return key
           end
+        end
+      end
+    end
+
+    def handle_untouched_trello_cards
+      cards = trello.get_cards_untouched_this_run(options.trello_board_id)
+      return unless cards
+
+      puts "Found #{cards.length} cards in trello that did not match any story imported from pivotal tracker."
+
+      question = "What would you like to do with these unimported cards?"
+      choices = {
+        method(:delete_after_confirmation)         => "Delete, remove all trello cards that were not just imported from tracker",
+        method(:review_each_card)                  => "Review, decide for each card whether to keep or delete",
+        lambda { |_| puts "Ignoring extra cards"}  => "Nothing, keep all of these cards",
+      }
+
+      prompt_selection(question, choices).call(cards)
+    end
+
+    def delete_after_confirmation(cards)
+      if agree("Confirm: Do you want to delete all cards not just imported?")
+        trello.delete_cards(cards)
+      end
+    end
+
+    def review_each_card(cards)
+      puts "Reviewing cards:"
+      cards.each do |card|
+        puts "\nCard name and url:"
+        puts "\t#{card.name}"
+        puts "\t#{card.url}"
+
+        choose do |menu|
+          menu.prompt = "What should be done with this card?"
+
+          menu.choice :Keep do puts "Keeping" end
+          menu.choice :Delete do
+            puts "Deleting"
+            trello.delete_card(card)
+          end
+          menu.choice :Quit do return end
         end
       end
     end

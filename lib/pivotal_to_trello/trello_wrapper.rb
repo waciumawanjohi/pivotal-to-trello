@@ -46,6 +46,11 @@ module PivotalToTrello
       @cards             ||= {}
       @cards[list_id]    ||= {}
       @cards[list_id][key] = card
+
+      @touched_cards ||= []
+      @touched_cards.push(card.id)
+
+      card
     end
 
     # Returns a hash of available boards, keyed on board ID.
@@ -116,23 +121,41 @@ module PivotalToTrello
     end
 
     def delete_all_cards(board_id)
-      list_ids = list_choices(board_id).keys
-      list_ids.each do |list_id|
-        next unless list_id
-        list = Trello::List.find(list_id)
-        cards = list.cards
-        next if cards.empty?
-        progress_bar = ProgressBar.new(cards.length)
-        progress_bar.puts "Deleting cards from #{list.name}"
-        list.cards.each do |card|
-          progress_bar.puts "Deleting: #{card.name}"
-          card.delete
-          progress_bar.increment!
-        end
+      cards = get_all_cards_in_trello(board_id)
+      delete_cards(cards)
+    end
+
+    def delete_cards(cards)
+      progress_bar = ProgressBar.new(cards.length)
+      cards.each do |card|
+        progress_bar.puts "Deleting: #{card.name}"
+        delete_card(card)
+        progress_bar.increment!
       end
     end
 
+    def delete_card(card)
+      retry_with_exponential_backoff( Proc.new { card.delete })
+    end
+
+    def delete_all_lists(board_id)
+      list_ids = list_choices(board_id).keys.filter { |list| list }
+      list_ids.each do |list_id|
+        list = retry_with_exponential_backoff( Proc.new { list.delete })
+      end
+    end
+
+    def get_cards_untouched_this_run(board_id)
+      all_cards = get_all_cards_in_trello(board_id)
+      all_cards.filter { |card| @touched_cards.exclude?(card.id) }
+    end
+
     private
+
+    def get_all_cards_in_trello(board_id)
+      list_ids = list_choices(board_id).keys.filter { |list| list }
+      list_ids.reduce([]) { |cards, list_id| cards.concat(cards_for_list(list_id).values)}
+    end
 
     # Copies notes from the pivotal story to the card.
     def create_comments(card, pivotal_story)
