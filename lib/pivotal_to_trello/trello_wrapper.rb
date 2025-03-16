@@ -36,7 +36,7 @@ module PivotalToTrello
       card   = @cards[card_hash(pivotal_story.name, pivotal_story.description)]
       card ||= begin
         @logger.puts "Creating a card for #{pivotal_story.story_type} '#{pivotal_story.name}'."
-        card = retry_with_exponential_backoff( Proc.new {
+        retry_with_exponential_backoff( Proc.new {
           Trello::Card.create(
             name:    pivotal_story.name,
             desc:    pivotal_story.description,
@@ -44,8 +44,6 @@ module PivotalToTrello
             pos:     pos,
           )
         })
-
-        card
       end
 
       ensure_position_is_correct(card, pos)
