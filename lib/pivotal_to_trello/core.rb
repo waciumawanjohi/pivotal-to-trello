@@ -35,16 +35,6 @@ module PivotalToTrello
         return
       end
 
-      linking_map = stories.map { |story| [story.id, story.before_id] }.to_h
-      pos_map = {}
-      # find the first story, which is after no other story
-      story_id = stories.find { |story| story.after_id.nil? }.id
-      i = 1
-      while story_id
-        pos_map[story_id] = i
-        i += 1
-        story_id = linking_map[story_id]
-      end
 
       starting_story_id = options.resume_id ? options.resume_id.to_i : 0
       stories_to_process = stories.filter { |story| starting_story_id < story.id }
@@ -61,7 +51,7 @@ module PivotalToTrello
 
         progress_bar.puts "Processing: #{story.id}"
 
-        card    = trello.create_card(list_id, story, pos_map[story.id])
+        card    = trello.create_card(list_id, story, pivotal.get_story_order_number(story))
 
         label_color = get_label_color(story, options)
         trello.add_label(card, story.story_type, label_color) unless label_color.nil?

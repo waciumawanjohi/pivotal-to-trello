@@ -27,6 +27,10 @@ module PivotalToTrello
       create_story_order_map
       @stories
     end
+
+    def get_story_order_number(story)
+      return @pos_map[story.id]
+    end
     end
 
     # Takes a list of ids and returns an array of PivotalStory objects
@@ -38,6 +42,21 @@ module PivotalToTrello
     def project
       @projects             ||= {}
       @projects[project_id] ||= @client.project(@project_id)
+    end
+
+    private
+
+    def create_story_order_map
+      linking_map = @stories.map { |story| [story.id, story.before_id] }.to_h
+      @pos_map = {}
+      # find the first story, which is after no other story
+      story_id = @stories.find { |story| story.after_id.nil? }.id
+      i = 1
+      while story_id
+        @pos_map[story_id] = i
+        i += 1
+        story_id = linking_map[story_id]
+      end
     end
   end
 end
