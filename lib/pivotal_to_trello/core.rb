@@ -52,15 +52,9 @@ module PivotalToTrello
       stories_to_process.each do |story|
         progress_bar.increment!
 
-        list_id = get_list_id(story)
-        next unless list_id
-
         progress_bar.puts "Processing: #{story.id}"
 
-        card    = trello.create_card(list_id, story, pivotal.get_story_order_number(story))
-
-        label_color = get_label_color(story)
-        trello.add_label(card, story.story_type, label_color) unless label_color.nil?
+        card = trello.create_card(story, pivotal.get_story_order_number(story))
       end
       puts "Import complete"
       handle_untouched_trello_cards
@@ -72,28 +66,6 @@ module PivotalToTrello
 
     private
 
-    # Returns the Trello list_id to import the given story into, based on the users input.
-    def get_list_id(story)
-      if story.current_state == 'unstarted'
-        key = story.story_type
-      else
-        key = story.current_state
-      end
-
-      list_id = @list_assignment[key]
-
-      if list_id.nil?
-        puts "Ignoring story #{story.id} - type is '#{story.story_type}', state is '#{story.current_state}'"
-      end
-
-      list_id
-    end
-
-    # Returns the Trello label for the given story into, based on the users input.
-    def get_label_color(story)
-      @colors[story.story_type]
-    end
-
     # Prompts the user for target export project and import board
     def prompt_for_project_and_board
       pivotal.add_project(prompt_selection('Which Pivotal project would you like to export?', pivotal.project_choices))
@@ -102,26 +74,27 @@ module PivotalToTrello
 
     # Prompts the user for details about the import/export.
     def prompt_for_details
-      @list_assignment = {}
-      @list_assignment["icebox"]    = prompt_selection("Which Trello list would you like to put 'icebox' stories into?", trello.list_choices),
-      @list_assignment["bug"]       = prompt_selection("Which Trello list would you like to put 'backlog' BUGS into?", trello.list_choices),
-      @list_assignment["chore"]     = prompt_selection("Which Trello list would you like to put 'backlog' CHORES into?", trello.list_choices),
-      @list_assignment["feature"]   = prompt_selection("Which Trello list would you like to put 'backlog' FEATURES into?", trello.list_choices),
-      @list_assignment["release"]   = prompt_selection("Which Trello list would you like to put 'backlog' RELEASES into?", trello.list_choices),
-      @list_assignment["started"]   = prompt_selection("Which Trello list would you like to put 'started' stories into?", trello.list_choices),
-      @list_assignment["finished"]  = prompt_selection("Which Trello list would you like to put 'finished' stories into?", trello.list_choices),
-      @list_assignment["delivered"] = prompt_selection("Which Trello list would you like to put 'delivered' stories into?", trello.list_choices),
-      @list_assignment["accepted"]  = prompt_selection("Which Trello list would you like to put 'accepted' stories into?", trello.list_choices),
-      @list_assignment["rejected"]  = prompt_selection("Which Trello list would you like to put 'rejected' stories into?", trello.list_choices),
+      list_assignment = {}
+      list_assignment["icebox"]    = prompt_selection("Which Trello list would you like to put 'icebox' stories into?", trello.list_choices),
+      list_assignment["bug"]       = prompt_selection("Which Trello list would you like to put 'backlog' BUGS into?", trello.list_choices),
+      list_assignment["chore"]     = prompt_selection("Which Trello list would you like to put 'backlog' CHORES into?", trello.list_choices),
+      list_assignment["feature"]   = prompt_selection("Which Trello list would you like to put 'backlog' FEATURES into?", trello.list_choices),
+      list_assignment["release"]   = prompt_selection("Which Trello list would you like to put 'backlog' RELEASES into?", trello.list_choices),
+      list_assignment["started"]   = prompt_selection("Which Trello list would you like to put 'started' stories into?", trello.list_choices),
+      list_assignment["finished"]  = prompt_selection("Which Trello list would you like to put 'finished' stories into?", trello.list_choices),
+      list_assignment["delivered"] = prompt_selection("Which Trello list would you like to put 'delivered' stories into?", trello.list_choices),
+      list_assignment["accepted"]  = prompt_selection("Which Trello list would you like to put 'accepted' stories into?", trello.list_choices),
+      list_assignment["rejected"]  = prompt_selection("Which Trello list would you like to put 'rejected' stories into?", trello.list_choices),
 
-      @colors = {}
-      @colors["bug"]                = prompt_selection('What color would you like to label bugs with?', trello.label_choices)
-      @colors["feature"]            = prompt_selection('What color would you like to label features with?', trello.label_choices)
-      @colors["chore"]              = prompt_selection('What color would you like to label chores with?', trello.label_choices)
-      @colors["release"]            = prompt_selection('What color would you like to label releases with?', trello.label_choices)
-      @colors["tracker labels"]     = prompt_selection('What color would you like to for copies of tracker labels?', trello.label_choices)
-      @colors["estimate"]           = prompt_selection('What color would you like to for point estimate labels?', trello.label_choices)
-      trello.add_label_colors(@colors)
+      colors = {}
+      colors["bug"]                = prompt_selection('What color would you like to label bugs with?', trello.label_choices)
+      colors["feature"]            = prompt_selection('What color would you like to label features with?', trello.label_choices)
+      colors["chore"]              = prompt_selection('What color would you like to label chores with?', trello.label_choices)
+      colors["release"]            = prompt_selection('What color would you like to label releases with?', trello.label_choices)
+      colors["tracker labels"]     = prompt_selection('What color would you like to for copies of tracker labels?', trello.label_choices)
+      colors["estimate"]           = prompt_selection('What color would you like to for point estimate labels?', trello.label_choices)
+      trello.add_list_assignment(list_assignment)
+      trello.add_label_colors(colors)
     end
 
     # Prompts the user to select an option from the given list of choices.

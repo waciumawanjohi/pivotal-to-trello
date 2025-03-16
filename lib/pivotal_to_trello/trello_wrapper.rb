@@ -41,6 +41,10 @@ module PivotalToTrello
       @label_colors ||= label_colors
     end
 
+    def add_list_assignment(list_assignment)
+      @list_assignment = list_assignment
+    end
+
     def add_pivotal_owner_to_trello_member_map(o2m_map)
       @owner_to_member ||= o2m_map
     end
@@ -54,7 +58,9 @@ module PivotalToTrello
     end
 
     # Creates a card in the given list if one with the same name doesn't already exist.
-    def create_card(list_id, pivotal_story, pos)
+    def create_card(pivotal_story, pos)
+      list_id = get_list_id(pivotal_story)
+      return unless list_id
       card   = @cards[card_hash(pivotal_story.name, pivotal_story.description)]
       card ||= begin
         @logger.puts "Creating a card for #{pivotal_story.story_type} '#{pivotal_story.name}'."
@@ -75,6 +81,7 @@ module PivotalToTrello
       ensure_card_members_are_correct(card, pivotal_story)
       create_story_labels(card, pivotal_story)
       create_points_labels(card, pivotal_story)
+      apply_story_type_label(card, pivotal_story)
 
       key                  = card_hash(card.name, card.desc)
       @cards[key]          = card
@@ -180,6 +187,27 @@ module PivotalToTrello
     end
 
     private
+
+    # Returns the Trello list_id to import the given story into, based on the users input.
+    def get_list_id(story)
+      if story.current_state == 'unstarted'
+        key = story.story_type
+      else
+        key = story.current_state
+      end
+
+      list_id = @list_assignment[key]
+
+      if list_id.nil?
+        puts "Ignoring story #{story.id} - type is '#{story.story_type}', state is '#{story.current_state}'"
+      end
+
+      if story.respond_to?(:labels) && story.labels.kind_of?(Array) && story.labels.any? { |label| label.name == "wnd"}
+        list_id = @list_assignment[label.name]
+      end
+
+      list_id
+    end
 
     # Copies notes from the pivotal story to the card.
     def create_comments(card, pivotal_story)
@@ -289,6 +317,12 @@ module PivotalToTrello
       if pivotal_story.respond_to?(:estimate)
         add_label(card, pivotal_story.estimate.to_i.to_s, @label_colors["estimate"])
       end
+    end
+
+    def apply_story_type_label(card, pivotal_story)
+      label_color = @label_colors[pivotal_story.story_type]
+      return if label_color.nil?
+      add_label(card, pivotal_story.story_type, label_color)
     end
 
     # Returns a unique identifier for this list/name/description combination.
