@@ -41,6 +41,10 @@ module PivotalToTrello
       @estimate_color      = estimate_color
     end
 
+    def add_pivotal_owner_to_trello_member_map(o2m_map)
+      @owner_to_member = o2m_map
+    end
+
     # Creates a card in the given list if one with the same name doesn't already exist.
     def create_card(list_id, pivotal_story, pos)
       card   = @cards[card_hash(pivotal_story.name, pivotal_story.description)]
@@ -60,7 +64,7 @@ module PivotalToTrello
       ensure_position_is_correct(card, pos)
       create_comments(card, pivotal_story)
       create_tasks(card, pivotal_story)
-      create_card_members(card, pivotal_story)
+      ensure_card_members_are_correct(card, pivotal_story)
       create_story_labels(card, pivotal_story)
       create_points_labels(card, pivotal_story)
 
@@ -165,6 +169,10 @@ module PivotalToTrello
       MULTILINE
     end
 
+    def get_board_members
+      retry_with_exponential_backoff( Proc.new { Trello::Board.find(@board_id).members })
+    end
+
     private
 
     # Copies notes from the pivotal story to the card.
@@ -208,24 +216,42 @@ module PivotalToTrello
       end
     end
 
-    def create_card_members(card, pivotal_story)
+    def ensure_card_members_are_correct(card, pivotal_story)
       @logger.puts "Adding members to card: '#{card.name}'"
       return unless pivotal_story.respond_to?(:owners)
 
       if card.respond_to?(:members)
         card_members = retry_with_exponential_backoff( Proc.new { card.members })
-        card_member_ids = card_members.nil? ? [] : card.members.map { |member| member.id}
+        current_card_member_ids = card_members.nil? ? [] : card.members.map { |member| member.id}
       else
-        card_member_ids = []
+        current_card_member_ids = []
       end
 
       pivotal_owners = retry_with_exponential_backoff( Proc.new { pivotal_story.owners })
-      pivotal_owners.each do |owner|
-        candidate_member_id = @owner_to_member[owner.id]
-        next if candidate_member_id.nil? || card_member_ids.include?(candidate_member_id)
-        add_member(card, candidate_member_id)
+      expected_card_member_ids = pivotal_owners.map {|owner| @owner_to_member[owner.id] }.reject(&:nil?)
+
+      card_members_that_do_not_belong = current_card_member_ids - expected_card_member_ids
+      card_members_that_are_missing   = expected_card_member_ids - current_card_member_ids
+
+      card_members_that_do_not_belong.each do |id|
+        remove_member(card, id)
       end
 
+      card_members_that_are_missing.each do |id|
+        add_member(card, id)
+      end
+    end
+
+    def add_member(card, member_id)
+      member = retry_with_exponential_backoff( Proc.new { Trello::Member.find(member_id) })
+      @logger.puts "Adding #{member.full_name} to card '#{card.name}'"
+      retry_with_exponential_backoff( Proc.new { card.add_member(member) })
+    end
+
+    def remove_member(card, member_id)
+      member = retry_with_exponential_backoff( Proc.new { Trello::Member.find(member_id) })
+      @logger.puts "Removing #{member.full_name} from card '#{card.name}'"
+      retry_with_exponential_backoff( Proc.new { card.remove_member(member) })
     end
 
     def ensure_list_is_correct(card,list_id)
@@ -257,19 +283,6 @@ module PivotalToTrello
       if pivotal_story.respond_to?(:estimate)
         add_label(card, pivotal_story.estimate.to_i.to_s, @estimate_color)
       end
-    end
-
-    def owner_to_member()
-      # Users can manually alter the code to add map from their Tracker User Id and their Trello Member ID
-      o_to_m = {
-      }
-      o_to_m.default = nil
-      o_to_m
-    end
-
-    def add_member(card, member_id)
-      member = retry_with_exponential_backoff( Proc.new { Trello::Member.find(member_id) })
-      retry_with_exponential_backoff( Proc.new { card.add_member(member) })
     end
 
     # Returns a unique identifier for this list/name/description combination.

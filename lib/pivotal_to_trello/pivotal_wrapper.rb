@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'tracker_api'
+require 'progress_bar'
 
 module PivotalToTrello
   # Interface to the Pivotal Tracker API.
@@ -31,6 +32,15 @@ module PivotalToTrello
     def get_story_order_number(story)
       return @pos_map[story.id]
     end
+
+    def get_all_story_owners
+      puts "Getting the set of story owners in the pivotal tracker board"
+      progress_bar = ProgressBar.new(@stories.length)
+      story_owners = @stories.map do |story|
+        progress_bar.increment!
+        story.owners
+      end
+      story_owners.flatten.uniq
     end
 
     # Takes a list of ids and returns an array of PivotalStory objects

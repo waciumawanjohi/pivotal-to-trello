@@ -37,6 +37,11 @@ module PivotalToTrello
       end
 
 
+      pivotal_owners = pivotal.get_all_story_owners
+      trello_members = trello.get_board_members
+      o2m_map = map_owners_to_members(pivotal_owners, trello_members)
+      trello.add_pivotal_owner_to_trello_member_map(o2m_map)
+
       starting_story_id = options.resume_id ? options.resume_id.to_i : 0
       stories_to_process = stories.filter { |story| starting_story_id < story.id }
 
@@ -219,6 +224,35 @@ module PivotalToTrello
         menu.choice :Continue
         menu.choice :Quit do exit end
       end
+    end
+
+    def map_owners_to_members(pivotal_owners, trello_members)
+      puts "Set which Pivotal Tracker users match with which Trello users"
+      o2m_map = {}
+
+      members_choices = trello_members.to_h do |member|
+        [member.id, <<~MULTILINE
+
+        Full Name: #{member.full_name}
+        Email:     #{member.email}
+        Username:  #{member.username}
+        MULTILINE
+        ]
+      end
+      members_choices[nil] = "\nNone of these\n"
+
+      pivotal_owners.each do |owner|
+        puts <<~MULTILINE
+
+        Pivotal User
+        Name:     #{owner.name}
+        Username: #{owner.username}
+        Email:    #{owner.email}
+        MULTILINE
+
+        o2m_map[owner.id] = prompt_selection("Which Trello user matches the tracker user above?", members_choices)
+      end
+      o2m_map
     end
 
     # Returns an instance of the pivotal wrapper.
