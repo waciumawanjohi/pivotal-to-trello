@@ -32,6 +32,7 @@ module PivotalToTrello
       stories = pivotal.stories
 
       if stories.empty?
+        puts "Tracker project is empty. Done!"
         return
       end
 
