@@ -71,7 +71,7 @@ module PivotalToTrello
       @lists[board_id]
     end
 
-    # Returns a list of all cards in the given list, keyed on name.
+    # Returns a hashmap of all cards in the given list, keyed on hashed name/description.
     def cards_for_list(list_id)
       @cards          ||= {}
       @cards[list_id] ||= Trello::List.find(list_id).cards.each_with_object({}) do |card, hash|
