@@ -36,6 +36,11 @@ module PivotalToTrello
       @logger ||= logger
     end
 
+    def add_label_colors(tracker_label_color, estimate_color)
+      @tracker_label_color = tracker_label_color
+      @estimate_color      = estimate_color
+    end
+
     # Creates a card in the given list if one with the same name doesn't already exist.
     def create_card(list_id, pivotal_story, pos)
       card   = @cards[card_hash(pivotal_story.name, pivotal_story.description)]
@@ -242,7 +247,7 @@ module PivotalToTrello
       @logger.puts "Creating adding labels to card: '#{card.name}'"
       if pivotal_story.labels.is_a? Array
         pivotal_story.labels.each do |label|
-          add_label(card, label.name, 'pink')
+          add_label(card, label.name, @tracker_label_color)
         end
       end
     end
@@ -250,7 +255,7 @@ module PivotalToTrello
     def create_points_labels(card, pivotal_story)
       @logger.puts "Adding points to card: '#{card.name}'"
       if pivotal_story.respond_to?(:estimate)
-        add_label(card, pivotal_story.estimate.to_i.to_s, 'green')
+        add_label(card, pivotal_story.estimate.to_i.to_s, @estimate_color)
       end
     end
 

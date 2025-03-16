@@ -139,7 +139,10 @@ module PivotalToTrello
       options.chore_label        = prompt_selection('What color would you like to label chores with?', trello.label_choices)
       options.release_label      = prompt_selection('What color would you like to label releases with?', trello.label_choices)
       options.trello_deletion    = prompt_selection('Do you want to delete all cards currently in the Trello Board?', trello.deletion_choices)
+      tracker_label              = prompt_selection('What color would you like to for copies of tracker labels?', trello.label_choices)
+      estimate_label             = prompt_selection('What color would you like to for point estimate labels?', trello.label_choices)
 
+      trello.add_label_colors(tracker_label, estimate_label)
     end
 
     # Prompts the user to select an option from the given list of choices.
