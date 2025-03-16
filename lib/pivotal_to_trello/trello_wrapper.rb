@@ -16,10 +16,15 @@ module PivotalToTrello
 
     def ensure_lists_and_cards_cached(board_id)
       @lists           ||= retry_with_exponential_backoff( Proc.new { Trello::Board.find(board_id).lists })
-      @cards           ||= begin
-        card_array = @lists.flat_map { |list| Trello::List.find(list.id).cards.map(&:itself) }
-        card_array.map { |card| [card_hash(card.name, card.desc), card] }.to_h
-      end
+      @card_array = @lists.flat_map { |list| Trello::List.find(list.id).cards.map(&:itself) }
+      @cards   ||= @card_array.map { |card| [card_hash(card.name, card.desc), card] }.to_h
+    end
+
+    def get_duplicate_trello_cards
+      hash_func = ->(card) { card_hash(card.name, card.desc) }
+      duplicate_hashes = @card_array.group_by(&hash_func).select { |_, v| v.size > 1 }.keys
+      duplicate_cards = @card_array.filter {|card| duplicate_hashes.include? card_hash(card.name, card.desc) }
+      duplicate_cards.sort_by {|card| card_hash(card.name, card.desc)}
     end
 
     def add_logger(logger)
@@ -136,6 +141,20 @@ module PivotalToTrello
 
     def get_cards_untouched_this_run
       @cards.values.filter { |card| @touched_cards.exclude?(card.id) }
+    end
+
+    def pretty_print_cards(cards)
+      cards.each {|card| pretty_print_card(card) }
+    end
+
+    def pretty_print_card(card)
+      puts <<-MULTILINE
+      Name:        #{card.name}
+      Description: #{card.desc}
+      List:        #{card.list.name}
+      URL:         #{card.url}
+
+      MULTILINE
     end
 
     private

@@ -23,6 +23,8 @@ module PivotalToTrello
         end
       end
 
+      check_for_duplicates
+
       puts "\nBeginning import..."
       puts "Preprocessing tracker stories..."
 
@@ -197,6 +199,26 @@ module PivotalToTrello
           end
           menu.choice :Quit do return end
         end
+      end
+    end
+
+    def check_for_duplicates
+      duplicates = trello.get_duplicate_trello_cards
+      return if duplicates.empty?
+
+      puts "Found duplicates:"
+      trello.pretty_print_cards(duplicates)
+
+      puts <<-MULTILINE
+      The above cards don't have distinct name and descriptions.
+      It's recommended to stop the importer, make their names distinct and then rerun the importer.
+      MULTILINE
+
+      choose do |menu|
+        menu.prompt = "What would you like to do?"
+
+        menu.choice :Continue
+        menu.choice :Quit do exit end
       end
     end
 
