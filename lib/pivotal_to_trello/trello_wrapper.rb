@@ -143,6 +143,9 @@ module PivotalToTrello
 
     def delete_all_cards
       delete_cards(@cards.values)
+      delete_cards(get_archived_cards)
+      @card_array = []
+      @cards      = {}
     end
 
     def delete_cards(cards)
@@ -158,10 +161,11 @@ module PivotalToTrello
       retry_with_exponential_backoff( Proc.new { card.delete })
     end
 
-    def delete_all_lists
+    def close_all_lists
       @lists.each do |list|
-        retry_with_exponential_backoff( Proc.new { list.delete })
+        retry_with_exponential_backoff( Proc.new { list.close! })
       end
+      @lists      = []
     end
 
     def get_cards_untouched_this_run
@@ -182,8 +186,34 @@ module PivotalToTrello
       MULTILINE
     end
 
+    def pretty_format_members
+      get_board_members.map {|member| pretty_format_member(member)}.join("\n")
+    end
+
+    def pretty_format_member(member)
+      <<~MULTILINE
+
+      Full Name: #{member.full_name}
+      Email:     #{member.email}
+      Username:  #{member.username}
+      MULTILINE
+    end
+
     def get_board_members
-      retry_with_exponential_backoff( Proc.new { @board.members })
+      @board_members ||= retry_with_exponential_backoff( Proc.new { @board.members })
+    end
+
+    def create_opinions
+      @label_colors = {
+        "tracker labels": "blue",
+        "estimate":       "sky",
+        "feature":        "green",
+        "bug":            "red",
+        "chore":          "yellow",
+        "release":        "black",
+      }
+
+      create_default_lists
     end
 
     private
@@ -290,7 +320,7 @@ module PivotalToTrello
 
     def ensure_list_is_correct(card,list_id)
       if card.list_id != list_id
-        @logger.puts "Moving '#{card.name}' from #{card.list.name} to #{Trello::List.find(list_id).name}"
+        @logger.puts "Moving '#{card.name}' from #{card.list.name} (#{card.list.id}) to #{Trello::List.find(list_id).name} (#{list_id})"
         card.move_to_list(list_id)
       end
     end
@@ -323,6 +353,31 @@ module PivotalToTrello
       label_color = @label_colors[pivotal_story.story_type]
       return if label_color.nil?
       add_label(card, pivotal_story.story_type, label_color)
+    end
+
+    def get_archived_cards
+      @board.cards(filter: "closed")
+    end
+
+    def create_default_lists
+      default_lists =
+      [
+        {name:"Icebox",    pos:1, assignments: ["unscheduled"]},
+        {name:"Backlog",   pos:2, assignments: ["feature", "chore", "bug", "release"]},
+        {name:"Started",   pos:3, assignments: ["started"]},
+        {name:"Finished",  pos:4, assignments: ["finished"]},
+        {name:"Delivered", pos:5, assignments: ["delivered"]},
+        {name:"Rejected",  pos:6, assignments: ["rejected"]},
+        {name:"Accepted",  pos:7, assignments: ["accepted"]},
+      ]
+
+      default_lists.each { |dl| create_list(dl[:name], dl[:pos], dl[:assignments]) }
+    end
+
+    def create_list(name, pos, assignments)
+      @list_assignment ||= {}
+      list = Trello::List.create(name: name, pos: pos, board_id: @board_id)
+      assignments.each { |a| @list_assignment[a] = list.id}
     end
 
     # Returns a unique identifier for this list/name/description combination.

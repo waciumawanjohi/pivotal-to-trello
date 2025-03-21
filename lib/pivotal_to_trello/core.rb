@@ -15,14 +15,41 @@ module PivotalToTrello
     # Imports a Pivotal project into Trello.
     def import!
       $stdout.sync = true
-      prompt_for_project_and_board
-      prompt_for_details
 
-      if options.trello_deletion
-        if agree("Confirm: Do you want to delete all cards currently in the Trello board?")
-          trello.delete_all_cards(options.trello_board_id)
+      prompt_for_project_and_board
+
+      if options.default
+        puts <<~MULTILINE
+
+        Note:
+        Default works best in an empty board where the user members have already been added.
+        The board #{trello.get_board_name} currently has the following members:
+        #{trello.pretty_format_members}
+
+        If this is incorrect or incomplete, exit p2t, fix the members and rerun p2t.
+
+        WARNING!
+        Running p2t in default mode will wipe all cards and lists from your board.
+        MULTILINE
+        if agree(<<~MULTILINE
+          Confirm, do you want to:
+            - DELETE all cards
+            - close all lists
+          currently in the '#{trello.get_board_name}' board
+          #{trello.get_board_url}?
+
+          Yes, No
+          MULTILINE
+          )
+          trello.delete_all_cards
+          trello.close_all_lists
+        else
+          puts "Rerun when ready for clobbering!"
+          return
         end
       end
+
+      prompt_for_details
 
       check_for_duplicates
 
@@ -74,6 +101,11 @@ module PivotalToTrello
 
     # Prompts the user for details about the import/export.
     def prompt_for_details
+      if options.default
+        trello.create_opinions
+        return
+      end
+
       list_assignment = {}
       list_assignment["icebox"]    = prompt_selection("Which Trello list would you like to put 'icebox' stories into?", trello.list_choices),
       list_assignment["bug"]       = prompt_selection("Which Trello list would you like to put 'backlog' BUGS into?", trello.list_choices),
@@ -178,13 +210,7 @@ module PivotalToTrello
       o2m_map = {}
 
       members_choices = trello_members.to_h do |member|
-        [member.id, <<~MULTILINE
-
-        Full Name: #{member.full_name}
-        Email:     #{member.email}
-        Username:  #{member.username}
-        MULTILINE
-        ]
+        [member.id, trello.pretty_format_member(member)]
       end
       members_choices[nil] = "\nNone of these\n"
 

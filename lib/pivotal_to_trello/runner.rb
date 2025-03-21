@@ -30,7 +30,7 @@ module PivotalToTrello
         'import' => OptionParser.new do |opts|
           opts.banner = 'Usage: pivotal-to-trello import [options]'
           opts.separator ''
-          opts.separator 'All arguments except for -v and -h are required.'
+          opts.separator 'All key and token arguments are required.'
           opts.separator ''
           opts.separator 'Options:'
 
@@ -46,6 +46,9 @@ module PivotalToTrello
 
           opts.on('-r', '--resume-at STORY_ID', 'Pivotal Tracker Story ID to resume') do |resume_id|
             options.resume_id = resume_id
+          end
+          opts.on('-d', '--default', 'Deletes content in the trello board and creates an default tracker translation') do |default|
+            options.default = default
           end
 
           # Miscellaneous.
