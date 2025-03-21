@@ -369,6 +369,7 @@ module PivotalToTrello
         {name:"Delivered", pos:5, assignments: ["delivered"]},
         {name:"Rejected",  pos:6, assignments: ["rejected"]},
         {name:"Accepted",  pos:7, assignments: ["accepted"]},
+        {name:"Will Not Do",  pos:7, assignments: ["wnd"]},
       ]
 
       default_lists.each { |dl| create_list(dl[:name], dl[:pos], dl[:assignments]) }
