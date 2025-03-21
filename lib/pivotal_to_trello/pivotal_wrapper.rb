@@ -19,7 +19,7 @@ module PivotalToTrello
 
     # Returns all stories for the given project.
     def stories(project_id)
-      @client.project(project_id).stories(fields: ':default,before_id,after_id')
+      @client.project(project_id).stories(fields: ':default,before_id,after_id').sort_by(&:id)
     end
 
     # Takes a list of ids and returns an array of PivotalStory objects

@@ -44,6 +44,10 @@ module PivotalToTrello
             options.pivotal_token = pivotal_token
           end
 
+          opts.on('-r', '--resume-at STORY_ID', 'Pivotal Tracker Story ID to resume') do |resume_id|
+            options.resume_id = resume_id
+          end
+
           # Miscellaneous.
           opts.on_tail('-v', '--version', 'Show version information') { show_version }
           opts.on_tail('-h', '--help', 'Show this message') do
