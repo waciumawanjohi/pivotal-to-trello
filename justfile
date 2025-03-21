@@ -6,6 +6,8 @@ build-test-base:
     docker build -t p2t-testbase -f DockerfileTestBase .
 test specfile=".":
     docker build -t p2t-test -f DockerfileTestFast . && docker run p2t-test "{{specfile}}"
+push:
+    docker image tag pivotal-to-trello waciumawanjohi/pivotal-to-trello:latest && docker image push waciumawanjohi/pivotal-to-trello:latest
 
 # Run pivotal-to-trello and only process stories newer than [story-id]
 run-from tracker_story_id="0":
