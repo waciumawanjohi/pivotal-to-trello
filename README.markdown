@@ -1,33 +1,16 @@
 # Pivotal-to-Trello
 
-This repo provides a command for exporting a [Pivotal Tracker](https://www.pivotaltracker.com/) project to [Trello](https://trello.com/).
-
-This CLI is a fork of [Dave Perrett's pivotal-to-trello](https://github.com/recurser/pivotal-to-trello).
+This CLI exports stories from a [Pivotal Tracker](https://www.pivotaltracker.com/) project and converts them to cards in a [Trello](https://trello.com/) board. It is a fork of [Dave Perrett's pivotal-to-trello](https://github.com/recurser/pivotal-to-trello) with a number of [improvements for users](#improvements-from-fork).
 
 ## Installation
 
-### Dependencies
-
-- Docker
-
-### Instructions
-
-`docker pull waciumawanjohi/pivotal-to-trello`
+The program is packaged as a Docker container.
 
 ## Usage
 
 ### Presteps
 
-1. [Obtain your API credentials from Trello and Pivotal Tracker](#obtaining-api-credentials)
-2. Create a Trello Board that you will import into.
-3. [Add members](https://support.atlassian.com/trello/docs/adding-people-to-a-board/) to your Trello board. E.g. if your Pivotal Tracker project has stories owned by F. Rogers and L. Burton, ensure those individuals create accounts on Trello and are members of your new board.
-4. Set environment variables for your credentials
-
-```
- export TRELLO_KEY=
- export TRELLO_TOKEN=
- export PIVOTAL_TOKEN=
-```
+1. Obtain your API credentials from Trello and Pivotal Tracker.
 
 <details>
 
@@ -42,7 +25,7 @@ The Pivotal Tracker token can be found at the bottom of your [Pivotal profile pa
 ### Trello
 
 There are two methods for obtaining the Trello API key and token. The difference may be the age of the Trello account.
-If you visit https://trello.com/1/appKey/generate and are redirected to https://trello.com/app-key, then use Method 2.
+If you visit https://trello.com/1/appKey/generate and are redirected to https://trello.com/app-key, then use [Method 2](#method-2).
 
 #### Method 1
 
@@ -72,7 +55,19 @@ See the [Trello documentation](https://trello.com/docs/gettingstarted/index.html
 9. Click "Allow"
 10. Copy the **Token**
 
+---
+
 </details>
+
+2. Create a Trello Board that you will import into.
+3. [Add members](https://support.atlassian.com/trello/docs/adding-people-to-a-board/) to your Trello board. E.g. if your Pivotal Tracker project has stories owned by F. Rogers and L. Burton, ensure those individuals create accounts on Trello and are members of your new board.
+4. Set environment variables for your credentials
+
+```
+ export TRELLO_KEY=
+ export TRELLO_TOKEN=
+ export PIVOTAL_TOKEN=
+```
 
 ### Run with defaults (recommended)
 
@@ -88,6 +83,10 @@ The program will ask you to:
 - Identify the target Tracker Project and Trello Board
 - Confirm deletion of the current lists and cards
 - Map the Tracker Persons to Trello Members
+
+<details>
+
+<summary>Run without defaults</summary>
 
 ### Run without defaults
 
@@ -107,6 +106,10 @@ After all stories have been imported, the program will allow you to review exist
 
 If your run is interrupted and you know the ID of your last imported story, you can run with the --run-from flag and the story ID:
 `docker run -i waciumawanjohi/pivotal-to-trello:latest import --trello-key $TRELLO_KEY --trello-token $TRELLO_TOKEN --pivotal-token $PIVOTAL_TOKEN --run-from 188000000`
+
+---
+
+</details>
 
 ## Improvements from fork:
 This project improves upon its base in the following ways:
