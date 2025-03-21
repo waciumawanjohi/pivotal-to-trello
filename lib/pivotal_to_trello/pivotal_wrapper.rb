@@ -45,6 +45,8 @@ module PivotalToTrello
 
     # Takes a list of ids and returns an array of PivotalStory objects
     def get_stories_by_ids(story_ids)
+      @pos_map = {}
+      @pos_map.default = 1
       story_ids.map { |id| @client.story(id) }
     end
 
