@@ -1,271 +1,127 @@
-pivotal-to-trello [![Build Status](https://travis-ci.org/recurser/pivotal-to-trello.png?branch=master)](https://travis-ci.org/recurser/pivotal-to-trello) [![Gem Version](https://badge.fury.io/rb/pivotal-to-trello.svg)](https://badge.fury.io/rb/pivotal-to-trello)
-=================
+# Pivotal-to-Trello
 
-This repo provides a command for exporting a [Pivotal Tracker](https://www.pivotaltracker.com/) project to [Trello](https://trello.com/). The command is available as a gem or a docker container.
+This repo provides a command for exporting a [Pivotal Tracker](https://www.pivotaltracker.com/) project to [Trello](https://trello.com/).
 
-Getting started
----------------
+This CLI is a fork of [Dave Perrett's pivotal-to-trello](https://github.com/recurser/pivotal-to-trello).
 
-1. Install the gem:
+## Installation
 
-        > gem install pivotal-to-trello
+### Dependencies
 
-   Or pull the container down using Docker:
+- Docker
 
-        > docker pull ronawilliams/pivotal-to-trello
+### Instructions
 
-   When using the docker container, substitute `pivotal-to-trello` with `docker run -i ronawilliams/pivotal-to-trello`
+`docker pull waciumawanjohi/pivotal-to-trello`
 
-2. Run the importer:
+## Usage
 
-        > pivotal-to-trello import --trello-key TRELLO_API_KEY --trello-token TRELLO_TOKEN --pivotal-token PIVOTAL_TOKEN
+### Presteps
 
-  See the [Obtaining API credentials](#obtaining-api-credentials) section for details on how to obtain these credentials.
+1. [Obtain your API credentials from Trello and Pivotal Tracker](#obtaining-api-credentials)
+2. Create a Trello Board that you will import into.
+3. [Add members](https://support.atlassian.com/trello/docs/adding-people-to-a-board/) to your Trello board. E.g. if your Pivotal Tracker project has stories owned by F. Rogers and L. Burton, ensure those individuals create accounts on Trello and are members of your new board.
+4. Set environment variables for your credentials
 
-  The importer will ask you a series of questions to identify which Trello lists you want to import certain classes of stories into. It will then import the stories into Trello, along with any associated comments. It does not currently have the ability to import attachments.
+```
+ export TRELLO_KEY=
+ export TRELLO_TOKEN=
+ export PIVOTAL_TOKEN=
+```
 
-  For example :
+<details>
 
-        > pivotal-to-trello import --trello-key TRELLO_API_KEY --trello-token TRELLO_TOKEN --pivotal-token PIVOTAL_TOKEN
+<summary>Obtaining API credentials</summary>
 
-        Which Pivotal project would you like to export?
-        1. Android App
-        2. IOS App
-        3. Tech Support
-        4. Web App
-        Please select an option : 4
+## Obtaining API credentials
 
-        Which Trello board would you like to import into?
-        1. Development
-        2. Welcome Board
-        3. Wish List
-        Please select an option : 1
-
-        Which Trello list would you like to put 'icebox' stories into?
-        1. Accepted
-        2. Backlog
-        3. Bugs
-        4. Delivered
-        5. Finished
-        6. Icebox
-        7. In Progress
-        8. Rejected
-        9. Releases
-        10. [don't import these stories]
-        Please select an option : 6
-
-        Which Trello list would you like to put 'current' stories into?
-        1. Accepted
-        2. Backlog
-        3. Bugs
-        4. Delivered
-        5. Finished
-        6. Icebox
-        7. In Progress
-        8. Rejected
-        9. Releases
-        10. [don't import these stories]
-        Please select an option : 7
-
-        Which Trello list would you like to put 'finished' stories into?
-        1. Accepted
-        2. Backlog
-        3. Bugs
-        4. Delivered
-        5. Finished
-        6. Icebox
-        7. In Progress
-        8. Rejected
-        9. Releases
-        10. [don't import these stories]
-        Please select an option : 5
-
-        Which Trello list would you like to put 'delivered' stories into?
-        1. Accepted
-        2. Backlog
-        3. Bugs
-        4. Delivered
-        5. Finished
-        6. Icebox
-        7. In Progress
-        8. Rejected
-        9. Releases
-        10. [don't import these stories]
-        Please select an option : 4
-
-        Which Trello list would you like to put 'accepted' stories into?
-        1. Accepted
-        2. Backlog
-        3. Bugs
-        4. Delivered
-        5. Finished
-        6. Icebox
-        7. In Progress
-        8. Rejected
-        9. Releases
-        10. [don't import these stories]
-        Please select an option : 10
-
-        Which Trello list would you like to put 'rejected' stories into?
-        1. Accepted
-        2. Backlog
-        3. Bugs
-        4. Delivered
-        5. Finished
-        6. Icebox
-        7. In Progress
-        8. Rejected
-        9. Releases
-        10. [don't import these stories]
-        Please select an option : 10
-
-        Which Trello list would you like to put 'backlog' bugs into?
-        1. Accepted
-        2. Backlog
-        3. Bugs
-        4. Delivered
-        5. Finished
-        6. Icebox
-        7. In Progress
-        8. Rejected
-        9. Releases
-        10. [don't import these stories]
-        Please select an option : 2
-
-        Which Trello list would you like to put 'backlog' chores into?
-        1. Accepted
-        2. Backlog
-        3. Bugs
-        4. Delivered
-        5. Finished
-        6. Icebox
-        7. In Progress
-        8. Rejected
-        9. Releases
-        10. [don't import these stories]
-        Please select an option : 2
-
-        Which Trello list would you like to put 'backlog' features into?
-        1. Accepted
-        2. Backlog
-        3. Bugs
-        4. Delivered
-        5. Finished
-        6. Icebox
-        7. In Progress
-        8. Rejected
-        9. Releases
-        10. [don't import these stories]
-        Please select an option : 2
-
-        Which Trello list would you like to put 'backlog' releases into?
-        1. Accepted
-        2. Backlog
-        3. Bugs
-        4. Delivered
-        5. Finished
-        6. Icebox
-        7. In Progress
-        8. Rejected
-        9. Releases
-        10. [don't import these stories]
-        Please select an option : 2
-
-        What color would you like to label bugs with?
-        1. Blue
-        2. Green
-        3. Orange
-        4. Purple
-        5. Red
-        6. Yellow
-        7. [none]
-        Please select an option : 5
-
-        What color would you like to label features with?
-        1. Blue
-        2. Green
-        3. Orange
-        4. Purple
-        5. Red
-        6. Yellow
-        7. [none]
-        Please select an option : 2
-
-        What color would you like to label chores with?
-        1. Blue
-        2. Green
-        3. Orange
-        4. Purple
-        5. Red
-        6. Yellow
-        7. [none]
-        Please select an option : 6
-
-        What color would you like to label releases with?
-        1. Blue
-        2. Green
-        3. Orange
-        4. Purple
-        5. Red
-        6. Yellow
-        7. [none]
-        Please select an option : 4
-
-        Beginning import...
-        Creating a card for chore 'My example chore'.
-        ...
-
-Obtaining API credentials
--------------------------
-
-You can get your Trello application key by logging into Trello, and then visiting [https://trello.com/1/appKey/generate](https://trello.com/1/appKey/generate)
-
-Your 32-character application key will be listed in the first box.
-
-To obtain your Trello member token, visit the following URL, substuting your Trello application key for *APP_KEY*:
-
-[https://trello.com/1/authorize?key=APP_KEY&name=Pivotal%20To%20Trello&response_type=token&scope=read,write](https://trello.com/1/authorize?key=APP_KEY&name=Pivotal%20To%20Trello&response_type=token&scope=read,write)
-
-Click the *Allow* button, and you will be presented with a 64-character token.
-
-See the [Trello documentation](https://trello.com/docs/gettingstarted/index.html#getting-an-application-key) for more details.
+### Pivotal Tracker
 
 The Pivotal Tracker token can be found at the bottom of your [Pivotal profile page](https://www.pivotaltracker.com/profile).
 
-Change history
---------------
+### Trello
 
-* **Version 0.3.1 (2019-12-20)** : Added Ron Williams as an author in the gemspec again after `rake release` removed him.
-* **Version 0.3.0 (2019-12-04)** : Update to the maintained tracker_api gem (thanks @rwilliams!).
-* **Version 0.2.0 (2017-08-10)** : Fix label creation, update gem dependencies, add checklist support (thanks @rikthevik!), add docker support (thanks @kennethkalmer!).
-* **Version 0.1.2 (2014-01-13)** : Update version number in the gemspec.
-* **Version 0.1.1 (2014-01-13)** : Specify gem dependencies.
-* **Version 0.1.0 (2014-01-13)** : Initial version.
+There are two methods for obtaining the Trello API key and token. The difference may be the age of the Trello account.
+If you visit https://trello.com/1/appKey/generate and are redirected to https://trello.com/app-key, then use Method 2.
 
-Bug Reports
------------
+#### Method 1
 
-If you come across any problems, please [create a ticket](https://github.com/recurser/pivotal-to-trello/issues) and I'll try to get it fixed as soon as possible.
+1. Login into Trello
+2. Visit [https://trello.com/1/appKey/generate](https://trello.com/1/appKey/generate). Your 32-character application key will be listed in the first box.
+3. To obtain your Trello member token, visit the following URL, substuting your Trello application key for *APP_KEY*: [https://trello.com/1/authorize?key=APP_KEY&name=Pivotal%20To%20Trello&response_type=token&scope=read,write](https://trello.com/1/authorize?key=APP_KEY&name=Pivotal%20To%20Trello&response_type=token&scope=read,write)
+4. Click the *Allow* button, and you will be presented with a 64-character token.
 
-Contributing
-------------
+See the [Trello documentation](https://trello.com/docs/gettingstarted/index.html#getting-an-application-key) for more details.
 
-Once you've made your changes:
+#### Method 2
 
-1. [Fork](http://help.github.com/fork-a-repo/) pivotal-to-trello
-2. Create a topic branch - `git checkout -b my_branch`
-3. Push to your branch - `git push origin my_branch`
-4. Create a [Pull Request](http://help.github.com/pull-requests/) from your branch
-5. That's it!
+1. Login into Trello
+2. Visit https://trello.com/power-ups/admin/
+3. Acknowledge developer terms
+4. Click "New" in _Power-Ups and Integrations_
+5. Fill in the form. Suggested values:
+  - Power-Up Name: Pivotal-to-Trello
+  - Workspace: _The name of the workspace containing your target board_
+  - Iframe connector URL: _Skip_
+  - Email: _Your email_
+  - Support Contact: _Your email_
+  - Author: _Your name_
+6. Click "Generate a new API key"
+7. Copy the **API KEY**
+8. Click generate a "Token"
+9. Click "Allow"
+10. Copy the **Token**
 
+</details>
 
-Author
-------
+### Run with defaults (recommended)
 
-Dave Perrett :: hello@daveperrett.com :: [@daveperrett](http://twitter.com/daveperrett)
+`Default` will:
+- Clear all of the cards and lists from your chosen board.
+- Create the following lists: Icebox, Backlog, Started, Finished, Delivered, Rejected, Accepted, Will Not Do
+- For each Tracker story, create a card in the respective lists.
 
+Run the container, passing in the `default` flag:
+`docker run -i waciumawanjohi/pivotal-to-trello:latest import --trello-key $TRELLO_KEY --trello-token $TRELLO_TOKEN --pivotal-token $PIVOTAL_TOKEN --default`
 
-Copyright
----------
+The program will ask you to:
+- Identify the target Tracker Project and Trello Board
+- Confirm deletion of the current lists and cards
+- Map the Tracker Persons to Trello Members
 
-Copyright (c) 2017 Dave Perrett. See [License](https://github.com/recurser/jquery-i18n/blob/master/LICENSE) for details.
+### Run without defaults
+
+Running without default will not create any lists. Create your own desired lists in the Trello Board before running.
+
+Run the container:
+`docker run -i waciumawanjohi/pivotal-to-trello:latest import --trello-key $TRELLO_KEY --trello-token $TRELLO_TOKEN --pivotal-token $PIVOTAL_TOKEN`
+
+The program will ask you to:
+- Identify the target Tracker Project and Trello Board
+- Identify which list stories in Accepted, Finished, etc. belong
+- Choose label colors for different labels
+- Confirm deletion of the current lists and cards
+- Map the Tracker Persons to Trello Members
+
+After all stories have been imported, the program will allow you to review existing cards that were not imported. You can choose to keep or delete these.
+
+If your run is interrupted and you know the ID of your last imported story, you can run with the --run-from flag and the story ID:
+`docker run -i waciumawanjohi/pivotal-to-trello:latest import --trello-key $TRELLO_KEY --trello-token $TRELLO_TOKEN --pivotal-token $PIVOTAL_TOKEN --run-from 188000000`
+
+## Improvements from fork:
+This project improves upon its base in the following ways:
+- Created Trello cards have members assigned, corresponding to the Tracker story owners
+- Cards are created in their story's current Tracker order (rather than in story creation order)
+- Cards are created with the labels from the Tracker
+- Cards are created with a points estimation label
+- Users can choose a default configuration. Does not require users to precreate lists or manually map them to story states
+- Users can restart imports with `--run-from` flag
+- Users are notified of cards that were not imported from Tracker
+- Users can rerun the program at a later date and update their Trello board with changes to Tracker stories
+
+## License
+
+This project is licensed under AGPL by Waciuma Wanjohi.
+It is a modification of an MIT licensed project by Dave Perrett.
+
+Both licenses can be found in the [License file](./LICENSE).
