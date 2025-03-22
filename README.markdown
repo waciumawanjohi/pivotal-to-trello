@@ -25,9 +25,11 @@ The Pivotal Tracker token can be found at the bottom of your [Pivotal profile pa
 ### Trello
 
 There are two methods for obtaining the Trello API key and token. The difference may be the age of the Trello account.
-If you visit https://trello.com/1/appKey/generate and are redirected to https://trello.com/app-key, then use [Method 2](#method-2).
+If you visit https://trello.com/1/appKey/generate and are redirected to https://trello.com/app-key, then use Method 2. Otherwise, Method 1 is appropriate.
 
-#### Method 1
+<details>
+
+<summary>Method 1</summary>
 
 1. Login into Trello
 2. Visit [https://trello.com/1/appKey/generate](https://trello.com/1/appKey/generate). Your 32-character application key will be listed in the first box.
@@ -36,7 +38,10 @@ If you visit https://trello.com/1/appKey/generate and are redirected to https://
 
 See the [Trello documentation](https://trello.com/docs/gettingstarted/index.html#getting-an-application-key) for more details.
 
-#### Method 2
+</details>
+<details>
+
+<summary>Method 2</summary>
 
 1. Login into Trello
 2. Visit https://trello.com/power-ups/admin/
@@ -55,7 +60,7 @@ See the [Trello documentation](https://trello.com/docs/gettingstarted/index.html
 9. Click "Allow"
 10. Copy the **Token**
 
----
+</details>
 
 </details>
 
@@ -72,30 +77,39 @@ See the [Trello documentation](https://trello.com/docs/gettingstarted/index.html
 ### Run with defaults (recommended)
 
 `Default` will:
+
 - Clear all of the cards and lists from your chosen board.
 - Create the following lists: Icebox, Backlog, Started, Finished, Delivered, Rejected, Accepted, Will Not Do
 - For each Tracker story, create a card in the respective lists.
 
 Run the container, passing in the `default` flag:
-`docker run -i waciumawanjohi/pivotal-to-trello:latest import --trello-key $TRELLO_KEY --trello-token $TRELLO_TOKEN --pivotal-token $PIVOTAL_TOKEN --default`
+
+```sh
+docker run -i waciumawanjohi/pivotal-to-trello:latest import --trello-key $TRELLO_KEY --trello-token $TRELLO_TOKEN --pivotal-token $PIVOTAL_TOKEN --default
+```
 
 The program will ask you to:
+
 - Identify the target Tracker Project and Trello Board
 - Confirm deletion of the current lists and cards
-- Map the Tracker Persons to Trello Members
+- Map the Tracker Project Owners to Trello Members
+
+### Run without defaults
 
 <details>
 
 <summary>Run without defaults</summary>
 
-### Run without defaults
-
 Running without default will not create any lists. Create your own desired lists in the Trello Board before running.
 
 Run the container:
-`docker run -i waciumawanjohi/pivotal-to-trello:latest import --trello-key $TRELLO_KEY --trello-token $TRELLO_TOKEN --pivotal-token $PIVOTAL_TOKEN`
+
+```sh
+docker run -i waciumawanjohi/pivotal-to-trello:latest import --trello-key $TRELLO_KEY --trello-token $TRELLO_TOKEN --pivotal-token $PIVOTAL_TOKEN
+```
 
 The program will ask you to:
+
 - Identify the target Tracker Project and Trello Board
 - Identify which list stories in Accepted, Finished, etc. belong
 - Choose label colors for different labels
@@ -104,23 +118,29 @@ The program will ask you to:
 
 After all stories have been imported, the program will allow you to review existing cards that were not imported. You can choose to keep or delete these.
 
-If your run is interrupted and you know the ID of your last imported story, you can run with the --run-from flag and the story ID:
-`docker run -i waciumawanjohi/pivotal-to-trello:latest import --trello-key $TRELLO_KEY --trello-token $TRELLO_TOKEN --pivotal-token $PIVOTAL_TOKEN --run-from 188000000`
+If your run is interrupted and you know the ID of your last imported story, you can run with the resume-at flag and the story ID:
+
+```sh
+docker run -i waciumawanjohi/pivotal-to-trello:latest import --trello-key $TRELLO_KEY --trello-token $TRELLO_TOKEN --pivotal-token $PIVOTAL_TOKEN resume-at 188000000
+```
 
 ---
 
 </details>
 
-## Improvements from fork:
+## Improvements from fork
+
 This project improves upon its base in the following ways:
+
 - Created Trello cards have members assigned, corresponding to the Tracker story owners
 - Cards are created in their story's current Tracker order (rather than in story creation order)
-- Cards are created with the labels from the Tracker
-- Cards are created with a points estimation label
+- Cards are created with the labels from the Tracker story
+- Cards are created with a label for the story's points estimation
 - Users can choose a default configuration. Does not require users to precreate lists or manually map them to story states
-- Users can restart imports with `--run-from` flag
-- Users are notified of cards that were not imported from Tracker
-- Users can rerun the program at a later date and update their Trello board with changes to Tracker stories
+- Users can restart imports with `--resume-at` flag
+- Users are notified of cards present in the board that were not imported from Tracker
+- Will update the Trello cards with new changes in the Tracker stories
+- Progress bars display work done and estimated time remaining
 
 ## License
 
